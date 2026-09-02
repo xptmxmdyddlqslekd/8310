@@ -92,6 +92,24 @@
     white-space:nowrap;
   }
   .quicklinks a:hover{background:#FBF8F0;border-color:var(--mustard);}
+  .font-size-ctrl{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-left:auto;
+  }
+  .fs-label{font-size:12px;color:var(--ink-soft);}
+  .font-size-ctrl button{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:5px 9px;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--teal-deep);
+    cursor:pointer;
+  }
+  .font-size-ctrl button:hover{background:#FBF8F0;border-color:var(--mustard);}
 
   /* ---------- 통합 검색 ---------- */
   .global-search{
@@ -844,11 +862,65 @@
     padding:0 2px;
   }
 
+  /* ---------- 복사 버튼 ---------- */
+  .copy-btn{
+    position:absolute;
+    top:8px; right:8px;
+    z-index:2;
+    width:28px;height:28px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.92);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+    color:var(--teal);
+    cursor:pointer;
+  }
+  .copy-btn.done{background:#E7F2E4;border-color:#3F7A34;color:#3F7A34;}
+  .copy-btn-inline{
+    border:none;
+    background:none;
+    font-size:13px;
+    color:var(--teal);
+    cursor:pointer;
+    line-height:1;
+    padding:0 2px;
+  }
+  .copy-btn-inline.done{color:#3F7A34;}
+
+  /* ---------- 최근 본 강연 ---------- */
+  .recent-bar{
+    display:none;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+    font-size:12.5px;
+  }
+  .recent-bar .recent-label{
+    color:var(--ink-soft);
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .recent-chip{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:5px 12px;
+    color:var(--ink);
+    text-decoration:none;
+    white-space:nowrap;
+    max-width:220px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .recent-chip:hover{background:#FBF8F0;border-color:var(--mustard);}
+
   /* ---------- 인쇄 시 ---------- */
   @media print{
     .quicklinks, .global-search, nav.tabs, .controls, .pager, .print-btn,
-    footer.site, .fav-btn, .fav-btn-inline { display:none !important; }
-    body{background:#fff;}
+    footer.site, .fav-btn, .fav-btn-inline, .copy-btn, .copy-btn-inline, .recent-bar { display:none !important; }
+    body{background:#fff;zoom:100% !important;}
     header.site{background:#fff;padding:10px 0;}
     header.site h1, header.site p.sub, header.site p.updated-date{color:#20262B;}
     main{padding:0;max-width:100%;}
@@ -871,6 +943,11 @@
   <div class="inner">
     <a href="https://read365.edunet.net/PureScreen/SchoolSearch?schoolName=%EC%9A%B4%EC%95%94%EC%B4%88%20%ED%95%A8%EB%B0%95%EA%BD%83%EB%8F%84%EC%84%9C%EA%B4%80&provCode=J10&neisCode=J100004329" target="_blank" rel="noopener">📚 우리 학교 도서 검색</a>
     <a href="https://docs.google.com/spreadsheets/d/1RTYoJ64jq5hW06llR5b3VB_idytKXAqvubddHqbUfEA/edit" target="_blank" rel="noopener">🙋 희망도서 신청</a>
+    <span class="font-size-ctrl">
+      <span class="fs-label">글자 크기</span>
+      <button type="button" id="fsDown" aria-label="글자 작게">가−</button>
+      <button type="button" id="fsUp" aria-label="글자 크게">가+</button>
+    </span>
   </div>
 </div>
 
@@ -957,6 +1034,9 @@
       <select id="lectureFormat"><option value="">강연방식 전체</option></select>
       <label class="fav-filter"><input type="checkbox" id="lectureFavOnly"> ♥ 찜한 강연만 보기</label>
       <button type="button" class="toolbar-btn" id="lectureExportBtn">⬇ 목록 엑셀로 저장</button>
+    </div>
+    <div class="recent-bar" id="lectureRecentBar">
+      <span class="recent-label">🕘 최근 본 강연</span>
     </div>
     <div class="grid" id="lectureGrid"></div>
     <div class="pager">
@@ -1132,6 +1212,68 @@ function saveFavSet(key, set){
   try{ localStorage.setItem(key, JSON.stringify([...set])); }catch(e){}
 }
 
+/* ================= 최근 본 목록 저장 헬퍼 ================= */
+function loadRecentList(key){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function pushRecent(key, itemKey, max){
+  let list = loadRecentList(key);
+  list = list.filter(k=>k!==itemKey);
+  list.unshift(itemKey);
+  if(list.length>max) list = list.slice(0, max);
+  try{ localStorage.setItem(key, JSON.stringify(list)); }catch(e){}
+  return list;
+}
+
+/* ================= 클립보드 복사 헬퍼 ================= */
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).catch(()=>legacyCopy(text));
+  }
+  return Promise.resolve(legacyCopy(text));
+}
+function legacyCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+/* ================= 글자 크기 조절 ================= */
+(function(){
+  const LEVELS = [100, 115, 130];
+  const KEY = 'libFontScale';
+  let idx = 0;
+  try{
+    const saved = parseInt(localStorage.getItem(KEY), 10);
+    const found = LEVELS.indexOf(saved);
+    if(found>=0) idx = found;
+  }catch(e){}
+
+  function apply(){
+    const pct = LEVELS[idx]+'%';
+    if('zoom' in document.body.style){
+      document.body.style.zoom = pct;
+    } else {
+      document.body.style.fontSize = pct;
+    }
+    try{ localStorage.setItem(KEY, LEVELS[idx]); }catch(e){}
+  }
+  apply();
+
+  const upBtn = document.getElementById('fsUp');
+  const downBtn = document.getElementById('fsDown');
+  if(upBtn) upBtn.addEventListener('click', ()=>{ if(idx<LEVELS.length-1){ idx++; apply(); } });
+  if(downBtn) downBtn.addEventListener('click', ()=>{ if(idx>0){ idx--; apply(); } });
+})();
+
 /* ================= 탭 전환 ================= */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1162,6 +1304,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   const nextBtn = document.getElementById('lectureNext');
   const jumpInput = document.getElementById('lectureJumpInput');
   const jumpBtn = document.getElementById('lectureJumpBtn');
+  const recentBar = document.getElementById('lectureRecentBar');
+  const RECENT_KEY = 'libRecentLectures';
 
   function favKey(d){ return d.u || (d.p+'|'+d.b+'|'+d.l+'|'+d.a); }
 
@@ -1246,11 +1390,13 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
           : '<span class="noimg">이미지 없음</span>';
         const badges = [d.t, d.f].filter(Boolean)
           .map((v,i)=>`<span class="badge${i===1?' fmt':''}">${esc(v)}</span>`).join('');
-        const link = d.u ? `<a class="link" href="${esc(d.u)}" target="_blank" rel="noopener">출판사 페이지에서 확인 →</a>` : '';
+        const link = d.u ? `<a class="link" href="${esc(d.u)}" target="_blank" rel="noopener" data-key="${esc(favKey(d))}">출판사 페이지에서 확인 →</a>` : '';
         const key = favKey(d);
         const isFav = favorites.has(key);
+        const copyText = [displayTitle, d.a, d.p, d.t, d.f, d.u].filter(Boolean).join(' / ');
         return `<div class="card">
           <button class="fav-btn${isFav?' active':''}" data-key="${esc(key)}" aria-label="찜">${isFav?'♥':'♡'}</button>
+          <button class="copy-btn" data-copy="${esc(copyText)}" aria-label="정보 복사" title="정보 복사">📋</button>
           <div class="thumb">${thumb}</div>
           <div class="body">
             <div class="pub">${esc(d.p)}</div>
@@ -1266,6 +1412,17 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     prevBtn.disabled = page<=1;
     nextBtn.disabled = page>=totalPages;
     jumpInput.max = totalPages;
+    renderRecentBar();
+  }
+
+  function renderRecentBar(){
+    const keys = loadRecentList(RECENT_KEY);
+    if(keys.length===0){ recentBar.style.display='none'; return; }
+    const items = keys.map(k=>LECTURES.find(d=>favKey(d)===k)).filter(Boolean);
+    if(items.length===0){ recentBar.style.display='none'; return; }
+    recentBar.innerHTML = '<span class="recent-label">🕘 최근 본 강연</span>'
+      + items.map(d=>`<a class="recent-chip" href="${esc(d.u)}" target="_blank" rel="noopener">${esc(d.l||d.b)}</a>`).join('');
+    recentBar.style.display = 'flex';
   }
 
   function jumpToPage(){
@@ -1279,15 +1436,31 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   }
 
   gridEl.addEventListener('click', (e)=>{
-    const btn = e.target.closest('.fav-btn');
-    if(!btn) return;
-    const key = btn.dataset.key;
-    if(favorites.has(key)) favorites.delete(key); else favorites.add(key);
-    saveFavSet(FAV_KEY, favorites);
-    if(favOnlyEl.checked){ computeFiltered(); render(); }
-    else {
-      btn.classList.toggle('active');
-      btn.textContent = favorites.has(key) ? '♥' : '♡';
+    const favBtn = e.target.closest('.fav-btn');
+    if(favBtn){
+      const key = favBtn.dataset.key;
+      if(favorites.has(key)) favorites.delete(key); else favorites.add(key);
+      saveFavSet(FAV_KEY, favorites);
+      if(favOnlyEl.checked){ computeFiltered(); render(); }
+      else {
+        favBtn.classList.toggle('active');
+        favBtn.textContent = favorites.has(key) ? '♥' : '♡';
+      }
+      return;
+    }
+    const copyBtn = e.target.closest('.copy-btn');
+    if(copyBtn){
+      copyToClipboard(copyBtn.dataset.copy).then(()=>{
+        const original = copyBtn.textContent;
+        copyBtn.textContent = '✓';
+        copyBtn.classList.add('done');
+        setTimeout(()=>{ copyBtn.textContent = original; copyBtn.classList.remove('done'); }, 1200);
+      });
+      return;
+    }
+    const link = e.target.closest('.link');
+    if(link && link.dataset.key){
+      pushRecent(RECENT_KEY, link.dataset.key, 8);
     }
   });
 
@@ -1400,9 +1573,11 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
           + (d.time ? `<span class="badge fmt">${esc(d.time)}</span>` : '');
         const key = favKey(d);
         const isFav = favorites.has(key);
+        const copyText = [d.title, d.author, d.grade, d.section, d.time, d.keywords].filter(Boolean).join(' / ');
         return `<div class="reading-card">
           <div class="row1">
             <button class="fav-btn-inline${isFav?' active':''}" data-key="${esc(key)}" aria-label="찜">${isFav?'♥':'♡'}</button>
+            <button class="copy-btn-inline" data-copy="${esc(copyText)}" aria-label="정보 복사" title="정보 복사">📋</button>
             <span class="title">${d.popular ? '★ ' : ''}${esc(d.title)}</span>
             <span class="author">${esc(d.author)}</span>
             <span class="badges">${badges}</span>
@@ -1434,15 +1609,26 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   }
 
   listEl.addEventListener('click', (e)=>{
-    const btn = e.target.closest('.fav-btn-inline');
-    if(!btn) return;
-    const key = btn.dataset.key;
-    if(favorites.has(key)) favorites.delete(key); else favorites.add(key);
-    saveFavSet(FAV_KEY, favorites);
-    if(favOnlyEl.checked){ render(); }
-    else {
-      btn.classList.toggle('active');
-      btn.textContent = favorites.has(key) ? '♥' : '♡';
+    const favBtn = e.target.closest('.fav-btn-inline');
+    if(favBtn){
+      const key = favBtn.dataset.key;
+      if(favorites.has(key)) favorites.delete(key); else favorites.add(key);
+      saveFavSet(FAV_KEY, favorites);
+      if(favOnlyEl.checked){ render(); }
+      else {
+        favBtn.classList.toggle('active');
+        favBtn.textContent = favorites.has(key) ? '♥' : '♡';
+      }
+      return;
+    }
+    const copyBtn = e.target.closest('.copy-btn-inline');
+    if(copyBtn){
+      copyToClipboard(copyBtn.dataset.copy).then(()=>{
+        const original = copyBtn.textContent;
+        copyBtn.textContent = '✓';
+        copyBtn.classList.add('done');
+        setTimeout(()=>{ copyBtn.textContent = original; copyBtn.classList.remove('done'); }, 1200);
+      });
     }
   });
 
