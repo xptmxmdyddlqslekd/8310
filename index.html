@@ -438,6 +438,37 @@
     .apply-steps{grid-template-columns:1fr;}
   }
 
+  .tips-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:16px;
+  }
+  .tips-col{
+    border-radius:8px;
+    padding:12px 14px;
+    border-left:4px solid;
+  }
+  .tips-col h4{
+    font-family:'Pretendard',sans-serif;
+    font-size:12.5px;
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  .tips-col p{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.65;
+    margin:0;
+  }
+  .tips-lecture{background:#EAF0EE;border-left-color:var(--teal);}
+  .tips-lecture h4{color:var(--teal-deep);}
+  .tips-reading{background:#F7E9E7;border-left-color:var(--rose);}
+  .tips-reading h4{color:var(--rose);}
+  @media (max-width:760px){
+    .tips-box{grid-template-columns:1fr;}
+  }
+
   /* ---------- 낭독극 ---------- */
   .schedule-banner{
     display:flex;
@@ -754,6 +785,16 @@
             <strong>신청서 제출</strong>
             <p>신청 학년, 희망 일정, 행사 유형(작가와의 만남·소리극 낭독 콘서트·기타), 희망 도서명·작가명을 입력해 제출해 주세요.</p>
           </div>
+        </div>
+      </div>
+      <div class="tips-box">
+        <div class="tips-col tips-lecture">
+          <h4>📖 작가와의 만남 — 미리 알아두세요</h4>
+          <p>강연 전 <strong>사전독서</strong>가 꼭 필요해요. 섭외가 확정된 뒤 책을 주문하면 도착까지 <strong>1~2주</strong> 정도 걸릴 수 있으니, 사전독서 시간까지 감안해서 여유 있게 신청해 주세요.</p>
+        </div>
+        <div class="tips-col tips-reading">
+          <h4>🎙️ 낭독극 — 미리 알아두세요</h4>
+          <p>사전독서는 필요 없어요. 오히려 낭독극 단체 측에서 내용을 미리 알고 오면 아이들의 몰입도가 떨어진다며, 공연 <strong>후에 사후독서</strong>를 진행해 달라고 요청하고 있어요.</p>
         </div>
       </div>
     </div>
