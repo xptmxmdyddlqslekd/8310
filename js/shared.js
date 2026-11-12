@@ -7,6 +7,8 @@
 //   shared/onchaek       : 온책읽기 목록               { json: "..." }
 //   shared/readings      : 낭독극 작품 목록            { json: "..." }
 //   shared/lectures-0..n : 작가와의 만남 강연 목록(나눠 저장) { json: "[...]" }
+//   shared/events        : 교무수첩에서 '공개'로 체크한 행사 { json: "[{id,title,start,end,time,place,target,desc,poster}]" }
+//   shared/img-ev-...    : 공개 행사 포스터 { data }
 //   shared/img-...       : 관리자 페이지에서 올린 사진  { data: "data:image/jpeg;base64,..." }
 // =====================================================================
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -23,7 +25,7 @@ export const firebaseConfig = {
 
 export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-export const SHARED_KEYS = ['site', 'onchaek', 'readings', 'lectures'];
+export const SHARED_KEYS = ['site', 'onchaek', 'readings', 'lectures', 'events'];
 export const LECTURE_CHUNK = 400;   // 강연 목록을 문서 하나에 400개씩 나눠 저장
 
 const CACHE_PREFIX = 'libShared:';

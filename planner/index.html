@@ -485,6 +485,7 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 #fbGate .err{color:#c43d3d;font-size:13px;margin-top:12px;min-height:1em}
 #fbBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--leaf-soft,#e3f0e7);border-radius:12px;padding:10px 14px;font-size:13px}
 #fbBar .sp{flex:1}
+.wrap>#fbBar{grid-column:1/-1}
 .fbUser{font-size:12px;color:var(--fg3,#9a8d94);text-align:right}
 .fbUser button{border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font-size:12px}
 </style>
@@ -619,6 +620,7 @@ function persist(name){
   histRecord();
   store.memoVer=(store.memoVer||0)+1;
   if(name==="core"&&!store.resyncing){clearTimeout(store.resyncT);store.resyncT=setTimeout(()=>resyncAuto(),400)}
+  if(name==="core"){clearTimeout(store.pubT);store.pubT=setTimeout(()=>pubSync().catch(e=>console.warn("공개 실패",e)),2500)}
   store.dirty[name]=true; setSave("저장 중…");
   clearTimeout(store.timers[name]);
   store.timers[name]=setTimeout(()=>flush(name),700);
@@ -1387,6 +1389,10 @@ function openEvent(ev){
    <label class="f">재료<input id="e-mat" value="${esc(e.material)}"></label><label class="f">수량<input id="e-qty" value="${esc(e.qty)}"></label></div>
    <div><div class="small muted" style="margin-bottom:6px">이 행사에 필요한 준비 (눌러서 고르기)</div><div class="chips">${core.settings.prep.map(p=>`<button type="button" class="chip ${e.prep.includes(p.name)?"on":""}" data-pp="${esc(p.name)}">${esc(p.name)}</button>`).join("")}</div></div>
    ${e.prep.length?`<div><div class="small muted" style="margin-bottom:6px">준비 체크</div><div class="row">${e.prep.map(p=>`<label class="chk ${e.done.includes(p)?"done":""}" style="padding:5px 10px"><input type="checkbox" data-pd="${esc(p)}" ${e.done.includes(p)?"checked":""}><span class="t">${esc(p)}</span></label>`).join("")}</div></div>`:""}
+   <div class="memobox" style="gap:8px;border-color:${e.pub?"var(--accent)":"var(--line)"}"><label class="chk" style="background:transparent;padding:0"><input type="checkbox" id="e-pub" ${e.pub?"checked":""}><span class="t"><b>🌐 공개하기</b> <span class="small faint">활동 안내 사이트와 도서검색 PC 소식에 자동으로 보여요</span></span></label>
+    ${e.pub?`<div class="fgrid"><label class="f">대상<input id="e-ptarget" value="${esc(e.pubTarget||"")}" placeholder="예: 3·4학년, 전교생"></label><label class="f">시간<input id="e-ptime" value="${esc(e.pubTime||"")}" placeholder="예: 점심시간, 2~3교시"></label><label class="f">장소<input id="e-pplace" value="${esc(e.pubPlace||"")}" placeholder="예: 도서관"></label></div>
+    <label class="f">공개 설명 <span class="faint">(학생·선생님이 보는 글 · 위 '행사 내용'은 공개되지 않아요)</span><textarea id="e-pdesc" style="min-height:60px" placeholder="예: 동시집을 읽고 작가님께 궁금한 점을 질문 태그에 적어 보세요!">${esc(e.pubDesc||"")}</textarea></label>
+    ${e.poster?`<label class="chk" style="background:transparent;padding:0"><input type="checkbox" id="e-pposter" ${e.pubPoster!==false?"checked":""}><span class="t small">포스터도 같이 공개</span></label>`:""}`:""}</div>
    <div><div class="small muted" style="margin-bottom:6px">포스터</div>${posterSlot(e.poster,"e-file")}</div>
    <details class="memobox" ${evRange(e)[1]<=todayS||postFilled(e)?"open":""}><summary style="cursor:pointer;font-weight:700">행사 후 정리 ${evRange(e)[1]<todayS&&postLeft(e)?`<span class="chip" style="background:var(--warn-soft);border:0;color:var(--warn)">남은 정리 ${postLeft(e)}</span>`:""}</summary>
     <div class="fgrid" style="margin-top:8px"><label class="f">참여 학급<input id="e-pcls" value="${esc(e.post.classes)}" placeholder="예: 3~6학년 12학급"></label><label class="f">참여 학생 수<input type="number" min="0" inputmode="numeric" id="e-pstu" value="${esc(e.post.students)}" placeholder="명"></label></div>
@@ -1398,12 +1404,13 @@ function openEvent(ev){
    </details>`};
   const keep=()=>{const g=id=>{const x=document.getElementById(id);return x?x.value:undefined};
     e.post.classes=g("e-pcls")??e.post.classes;e.post.students=g("e-pstu")??e.post.students;e.post.improve=g("e-pimp")??e.post.improve;
-    e.name=g("e-name")??e.name;e.content=g("e-content")??"";e.budget=g("e-budget")??"";e.prize=g("e-prize")??"";e.material=g("e-mat")??"";e.qty=g("e-qty")??"";e.result=g("e-result")??"";
+    e.name=g("e-name")??e.name;e.content=g("e-content")??"";{const pb=document.getElementById("e-pub");if(pb)e.pub=pb.checked;const pp=document.getElementById("e-pposter");if(pp)e.pubPoster=pp.checked;e.pubTarget=g("e-ptarget")??e.pubTarget;e.pubTime=g("e-ptime")??e.pubTime;e.pubPlace=g("e-pplace")??e.pubPlace;e.pubDesc=g("e-pdesc")??e.pubDesc}e.budget=g("e-budget")??"";e.prize=g("e-prize")??"";e.material=g("e-mat")??"";e.qty=g("e-qty")??"";e.result=g("e-result")??"";
     if(e.type==="day"){const v=g("e-day");if(v){e.start=e.end=v}}else{const s=g("e-s"),en=g("e-e");if(s)e.start=s;if(en)e.end=en<e.start?e.start:en}};
   const m=modal(isNew?"행사 추가":"행사 수정",body(),`${isNew?"":`<button class="btn danger" data-del type="button">삭제</button><button class="btn ghost" data-gpush="${ev.id}" type="button">${ev.gcal?"구글에 보냄 ✓":"구글 캘린더에 넣기"}</button>`}<span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-ok type="button">저장</button>`);
   const redraw=()=>{keep();const sc=$(".mb",m).scrollTop;$(".mb",m).innerHTML=body();$(".mb",m).scrollTop=sc};
   bindPoster(m,e,redraw);
   m.addEventListener("change",x=>{
+    if(x.target.id==="e-pub"){keep();redraw();return}
     if(x.target.id==="e-mon"){keep();const[y,mo]=x.target.value.split("-").map(Number);const w=weeksOfMonth(y,mo)[0];e.start=w.mon;e.end=w.fri;redraw()}
     if(x.target.id==="e-wk"&&x.target.value){keep();e.start=x.target.value;e.end=ymd(addD(P(e.start),4));redraw()}
     const po=x.target.closest("[data-post]");if(po){keep();e.post[po.dataset.post]=po.checked;redraw();return}
@@ -1442,7 +1449,7 @@ function vEvents(){
       ${evs.length?`<div class="cards">${evs.map(e=>{const pr=e.prep.length?Math.round(e.done.length/e.prep.length*100):100;
         return `<button type="button" class="ecard" data-ev="${e.id}">${e.poster?`<img class="poster" src="${esc(e.poster)}" alt="">`:`<div class="ph"><span class="k">함박꽃북토리 행사</span><span class="n">${esc(e.name)}</span><span class="k num">${e.type==="day"?md(e.start):weekLabel(P(e.start))}</span></div>`}
         <div class="meta"><b>${esc(e.name)}</b><span class="small faint">${evWhen(e)}</span><div class="prog" title="준비 ${pr}%"><span style="width:${pr}%"></span></div>
-        <div class="chips">${evRange(e)[1]<todayS?(postLeft(e)?`<span class="chip" style="background:var(--warn-soft);color:var(--warn);border:0;font-weight:700">정리 남음 ${postLeft(e)}</span>`:`<span class="chip on">정리 끝</span>`):(evRemain(e).map(p=>`<span class="chip todo">${esc(p)}</span>`).join("")||`<span class="chip on">준비 끝</span>`)}${e.post&&e.post.students?`<span class="chip num">${e.post.students}명</span>`:""}</div></div></button>`}).join("")}</div>`:""}</div>`}).join("");
+        <div class="chips">${evRange(e)[1]<todayS?(postLeft(e)?`<span class="chip" style="background:var(--warn-soft);color:var(--warn);border:0;font-weight:700">정리 남음 ${postLeft(e)}</span>`:`<span class="chip on">정리 끝</span>`):(evRemain(e).map(p=>`<span class="chip todo">${esc(p)}</span>`).join("")||`<span class="chip on">준비 끝</span>`)}${e.pub?`<span class="chip" style="background:var(--accent-soft);color:var(--accent-deep);border:0">🌐 공개</span>`:""}${e.post&&e.post.students?`<span class="chip num">${e.post.students}명</span>`:""}</div></div></button>`}).join("")}</div>`:""}</div>`}).join("");
   }else if(sub==="prog"){
     const progs=core.settings.programs;
     inner=progs.length?progs.map(p=>{const rows=AY_MONTHS.map(m=>{const k=ym(ayMonthDate(ui.ay,m));const pm=((core.pmonths[p.id]||{})[k])||{};const cur=k===ym(TODAY);
@@ -3585,6 +3592,21 @@ document.addEventListener("change",async e=>{const t=e.target,d=t.dataset;
 function xcAutoRefresh(){if(!core.xcal||!XC().auto||store.mode!=="db")return;const old=XC().src.filter(s=>s.kind==="google"&&(!s.at||Date.now()-s.at>30*60000));if(old.length)gRefresh(old.map(s=>s.id)).catch(()=>{})}
 
 /* 시작 */
+
+/* ===== 공개 행사 → 공용 정보(shared/events) : 활동 안내 사이트·도서검색 PC가 읽음 ===== */
+async function pubShrink(d){if(d.length<=900000)return d;const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=d});
+  for(const [w,q] of [[1200,.8],[1000,.75],[800,.7],[600,.65]]){const s=Math.min(1,w/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);const o=c.toDataURL("image/jpeg",q);if(o.length<=900000)return o}return ""}
+async function pubSync(force){if(store.mode!=="db"||!window.FB||!FB.auth.currentUser)return;
+  const evs=(core.events||[]).filter(e=>e.pub&&e.name&&e.start).sort((a,b)=>a.start.localeCompare(b.start)).map(e=>({id:e.id,title:e.name,start:e.start,end:e.end&&e.end!==e.start?e.end:"",time:e.pubTime||"",place:e.pubPlace||"",target:e.pubTarget||"",desc:e.pubDesc||"",poster:e.poster&&e.pubPoster!==false?"fs:img-ev-"+e.id:"",_p:e.poster&&e.pubPoster!==false?e.poster:""}));
+  const key="hb-pub-"+FB.auth.currentUser.uid;let last={};try{last=JSON.parse(localStorage.getItem(key)||"{}")}catch(x){}
+  const out=evs.map(({_p,...r})=>r),j=JSON.stringify(out),imgs={};evs.forEach(e=>{if(e._p)imgs["img-ev-"+e.id]=e._p});
+  if(!force&&j===last.j&&JSON.stringify(imgs)===JSON.stringify(last.imgs||{}))return;
+  const sh=FB.fs.collection("shared"),b=FB.fs.batch(),now=Date.now();
+  for(const [id,src] of Object.entries(imgs)){if(!force&&(last.imgs||{})[id]===src)continue;let d=src;try{if(/^fsa:/.test(src))d=await FBA.getAsset(src.slice(4));d=await pubShrink(d)}catch(x){d=""}if(d)b.set(sh.doc(id),{data:d,at:now})}
+  Object.keys(last.imgs||{}).forEach(id=>{if(!imgs[id])b.delete(sh.doc(id))});
+  b.set(sh.doc("events"),{json:j});b.set(sh.doc("manifest"),{events:{v:now,count:out.length},updatedAt:now,updatedBy:FB.auth.currentUser.email||""},{merge:true});
+  try{await b.commit();try{localStorage.setItem(key,JSON.stringify({j,imgs,at:now}))}catch(x){}setSave("공개 행사 "+out.length+"개를 사이트·검색 PC에 반영함 · "+new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}))}
+  catch(x){toast(/permission/i.test(x.code||x.message||"")?"공개하지 못했어요: 관리자 계정으로 로그인해야 해요":"공개 행사를 사이트에 올리지 못했어요. 잠시 뒤 다시 해 볼게요");console.warn(x);clearTimeout(store.pubT);store.pubT=setTimeout(()=>pubSync().catch(()=>{}),60000)}}
 /* ===== 사이트판: 예전 기록 옮기기 ===== */
 async function importAssetsInto(o){if(!o||!o.assets||!window.FBA)return o;let txt=JSON.stringify({core:o.core,journals:o.journals});
   const ids=Object.keys(o.assets);let i=0;for(const id of ids){i++;setSave(`첨부 파일 옮기는 중… ${i}/${ids.length}`);const a=o.assets[id];const u=await FBA.putAsset(a.data,{name:a.name||"",type:a.type||""},id);txt=txt.split("/_blob/"+id).join(u)}

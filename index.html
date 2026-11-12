@@ -574,6 +574,7 @@
     margin-bottom:18px;
   }
   .schedule-banner strong{font-size:14.5px;color:#FBF8F0;}
+  .ev-poster{margin-top:6px;font-size:12.5px}.ev-poster summary{cursor:pointer;color:var(--mustard-deep,#b07a1a);font-weight:700}.ev-poster img{display:block;max-width:220px;width:100%;margin-top:6px;border-radius:8px}
   .schedule-banner p{margin:4px 0 0;font-size:12.5px;color:#CFDAD3;}
   .schedule-banner a{
     background:var(--mustard);
@@ -1635,15 +1636,20 @@ document.addEventListener('toggle', e=>{
     const d = new Date(+m[1], +m[2]-1, +m[3]);
     return `${+m[2]}월 ${+m[3]}일(${WD[d.getDay()]})`;
   }
-  const sched = (SITE.schedule||[]).filter(e=>e.title).slice().sort((a,b)=>String(a.date||'9').localeCompare(String(b.date||'9')));
-  const isPast = e => /^\d{4}-\d{2}-\d{2}$/.test(e.date||'') && e.date < todayIso;
+  // 교무수첩에서 '공개'로 체크한 행사(Firebase shared/events) + 관리자 페이지 행사 일정
+  const pubEv = (window.PUB_EVENTS||[]).filter(e=>e&&e.title).map(e=>({date:e.start, end:e.end||'', title:e.title, target:e.target||'', time:e.time||'', place:e.place||'', note:e.desc||'', poster:e.poster||''}));
+  const sameEv = (a,b) => a.date===b.date && (a.title===b.title || String(a.title).replace(/\s/g,'').includes(String(b.title).replace(/\s/g,'')) || String(b.title).replace(/\s/g,'').includes(String(a.title).replace(/\s/g,'')));
+  const sched = pubEv.concat((SITE.schedule||[]).filter(e=>e.title && !pubEv.some(p=>sameEv(p,e)))).sort((a,b)=>String(a.date||'9').localeCompare(String(b.date||'9')));
+  const isPast = e => /^\d{4}-\d{2}-\d{2}$/.test(e.end||e.date||'') && (e.end||e.date) < todayIso;
+  const dateOf = e => dateLabel(e.date) + (e.end && e.end!==e.date ? ' ~ ' + dateLabel(e.end) : '');
+  const posterOf = e => e.poster ? `<details class="ev-poster"><summary>포스터 보기</summary>${photosHtml([{src:e.poster, alt:e.title+' 포스터', fit:'contain'}])}</details>` : '';
   const where = e => [e.place, e.time].filter(Boolean).join(' · ');
   if(!sched.length) document.getElementById('gdSchedBox').style.display='none';
-  setHtml('gdSched', sched.map(e=>`<tr class="${isPast(e)?'past':''}"><td class="d">${dateLabel(e.date)}</td><td>${escHtml(e.title)}${e.note?`<span class="sub">${escHtml(e.note)}</span>`:''}</td><td>${escHtml(e.target)}</td><td>${escHtml(where(e))}</td></tr>`).join(''));
+  setHtml('gdSched', sched.map(e=>`<tr class="${isPast(e)?'past':''}"><td class="d">${dateOf(e)}</td><td>${escHtml(e.title)}${e.note?`<span class="sub">${escHtml(e.note)}</span>`:''}${posterOf(e)}</td><td>${escHtml(e.target)}</td><td>${escHtml(where(e))}</td></tr>`).join(''));
   const upcoming = sched.filter(e=>!isPast(e));
   if(upcoming.length){
     document.getElementById('evBooked').style.display='block';
-    setHtml('evBookedBody', upcoming.map(e=>`<tr><td class="d">${dateLabel(e.date)}</td><td>${escHtml(e.title)}</td><td>${escHtml(e.target)}</td><td>${escHtml(where(e))}</td></tr>`).join(''));
+    setHtml('evBookedBody', upcoming.map(e=>`<tr><td class="d">${dateOf(e)}</td><td>${escHtml(e.title)}${e.note?`<span class="sub">${escHtml(e.note)}</span>`:''}${posterOf(e)}</td><td>${escHtml(e.target)}</td><td>${escHtml(where(e))}</td></tr>`).join(''));
   }
 })();
 
@@ -2339,6 +2345,7 @@ try{
     if(d.lectures) window.LECTURES = d.lectures;
     if(d.readings) window.READINGS = d.readings;
     if(d.onchaek) window.ONCHAEK = d.onchaek;
+    if(d.events) window.PUB_EVENTS = d.events;
     window.__dataSource = 'firebase';
   }
 }catch(e){ console.warn('공용 정보 읽기 실패 — 백업 자료 사용', e); }
