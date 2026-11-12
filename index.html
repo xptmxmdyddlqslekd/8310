@@ -14,7 +14,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231F4B43%22/><text x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22>📚</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root{
     --ink:#20262B;
@@ -33,7 +34,7 @@
   body{
     background:var(--paper);
     color:var(--ink);
-    font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif;
+    font-family:'Pretendard Variable','Pretendard','Malgun Gothic','Noto Sans KR',system-ui,sans-serif;
     line-height:1.55;
     -webkit-font-smoothing:antialiased;
   }
@@ -1055,7 +1056,9 @@
   .guide-card ul{margin:10px 0 0;padding-left:18px;font-size:13.5px;}
   .guide-card li{margin:5px 0;}
   .guide-card p{font-size:13.5px;margin:0;}
-  .loan-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .loan-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:0;}
+  .sched{min-width:520px;}
+  .guide-grid > *{min-width:0;}
   .loan-table th,.loan-table td{border:1px solid var(--line);padding:8px 10px;text-align:center;}
   .loan-table thead th{background:#F1EDE1;color:var(--teal-deep);}
   .loan-table tbody th{background:#FAF7F1;}
@@ -1103,8 +1106,104 @@
     .controls select{flex:1 1 45%;min-width:0;}
   }
 
+  /* ================= 디자인 개선 (2026-11) ================= */
+  /* 2. 머리말 한 덩어리 */
+  header.site{padding:26px 24px 22px;}
+  .head-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,460px);gap:18px 32px;align-items:end;}
+  header.site .eyebrow{font-size:12.5px;font-weight:700;color:var(--mustard);letter-spacing:.04em;margin-bottom:4px;}
+  header.site h1{font-size:28px;}
+  header.site p.sub{margin-top:6px;}
+  .head-tools{display:flex;flex-direction:column;gap:10px;}
+  header.site .global-search{background:none;border:0;position:relative;}
+  header.site .global-search input{width:100%;padding:11px 14px;border:0;border-radius:10px;font-size:14px;background:#FBF8F0;color:var(--ink);font-family:inherit;}
+  header.site .global-search input:focus{outline:3px solid var(--mustard);outline-offset:0;}
+  header.site .global-results{left:0;right:0;}
+  .quick-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .quick-links{display:flex;gap:6px;flex-wrap:wrap;}
+  .quick-links a{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#F5F1E6;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:20px;text-decoration:none;white-space:nowrap;}
+  .quick-links a:hover{background:rgba(255,255,255,.22);}
+  header.site .font-size-ctrl{margin-left:auto;}
+  header.site .fs-label{color:#CFDAD3;}
+  header.site .font-size-ctrl button{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#F5F1E6;}
+  header.site .font-size-ctrl button:hover{background:rgba(255,255,255,.22);}
+  /* 3. 탭 메뉴 고정 */
+  nav.tabs{position:sticky;top:0;z-index:40;box-shadow:0 2px 10px rgba(10,30,25,.12);}
+  /* 7. 개수 표시를 제목 옆으로 */
+  .panel-title{justify-content:flex-start;align-items:center;}
+  .panel-title .count{background:#EFEADD;color:var(--teal-deep);font-weight:600;font-size:12.5px;padding:2px 10px;border-radius:12px;}
+  .panel-title .print-btn{margin-left:auto;}
+  /* 6. 안내 상자 글자 진하게 */
+  .update-note{color:#6B4E12;background:#FBF3E2;border-color:#EBD9AE;font-size:13px;}
+  .update-note strong{color:#5A400C;}
+  /* 4. 책 모양 표지 */
+  .card .thumb{height:150px;position:relative;}
+  .card .thumb img{position:relative;z-index:1;}
+  .card .thumb img + .fake-cover{display:none;}
+  .fake-cover{position:absolute;inset:14px 34% 14px 34%;min-width:96px;left:50%;transform:translateX(-50%);right:auto;width:100px;background:var(--cv);border-radius:3px 7px 7px 3px;box-shadow:inset 6px 0 0 rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.18);display:flex;flex-direction:column;justify-content:space-between;padding:12px 10px 10px 14px;color:#FBF8F0;overflow:hidden;}
+  .fc-title{font-family:'Noto Serif KR',serif;font-weight:700;font-size:12.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;}
+  .fc-author{font-size:10.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 9. 꼬리말 */
+  footer.site{background:var(--teal-deep);color:#B9C7C0;padding:28px 24px 34px;margin-top:20px;line-height:1.7;}
+  footer.site .ft-name{font-family:'Noto Serif KR',serif;font-weight:700;color:#FBF8F0;font-size:15px;margin-bottom:4px;}
+  footer.site .ft-line{font-size:12.5px;}
+  footer.site .ft-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-top:10px;font-size:12.5px;}
+  footer.site a{color:#E4D3A8;text-decoration:none;}
+  footer.site a:hover{text-decoration:underline;}
+  footer.site .ft-admin{color:#7F948A;}
+  footer.site .ft-small{font-size:11px;color:#7F948A;margin-top:8px;}
+
+  @media (max-width:760px){
+    .head-grid{grid-template-columns:1fr;gap:12px;}
+  }
+  @media (max-width:640px){
+    header.site{padding:16px 16px 14px;}
+    header.site .eyebrow{font-size:11.5px;margin-bottom:2px;}
+    header.site h1{font-size:21px;}
+    header.site p.sub{display:none;}
+    .quick-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+    .quick-row::-webkit-scrollbar{display:none;}
+    .quick-links{flex-wrap:nowrap;}
+    header.site .fs-label{display:none;}
+    header.site .font-size-ctrl{flex:none;}
+    header.site .font-size-ctrl button{white-space:nowrap;padding:5px 8px;}
+    .quick-links a{font-size:12px;padding:6px 10px;}
+    .card .thumb{height:130px;}
+    .fake-cover{width:76px;min-width:0;padding:10px 8px 8px 12px;inset:12px auto 12px 50%;}
+    .fc-title{font-size:11.5px;-webkit-line-clamp:4;}
+    /* 8. 작가와의 만남 버튼 정리 */
+    .controls label.fav-filter{flex:1 1 auto;font-size:12.5px;padding:0;}
+    .controls .toolbar-btn{padding:9px 10px;font-size:12.5px;}
+    /* 5. 온책읽기 표 → 카드 */
+    #onchaekTable{min-width:0;}
+    #onchaekTable thead{display:none;}
+    #onchaekTable, #onchaekTable tbody{display:block;}
+    #onchaekTable tr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:12px 14px;border-bottom:1px solid var(--line);}
+    #onchaekTable td{display:block;padding:0;border:0;text-align:left;font-size:12.5px;color:var(--ink-soft);}
+    #onchaekTable td:empty{display:none;}
+    #onchaekTable td[data-k="no"]{display:none;}
+    #onchaekTable td[data-k="title"]{flex:1 1 100%;order:-2;font-size:15px;font-weight:700;color:var(--ink);}
+    #onchaekTable td[data-k="grade"]{order:-1;}
+    #onchaekTable td[data-k="author"]{order:1;}
+    #onchaekTable td[data-k="pub"]{order:2;}
+    #onchaekTable td[data-k="year"]{order:3;}
+    #onchaekTable tr::after{content:'';flex-basis:100%;order:4;height:2px;}
+    #onchaekTable td[data-k="lecStatus"]{order:5;}
+    #onchaekTable td[data-k="readable"]{order:6;}
+    #onchaekTable td[data-k="total"]{order:7;}
+    #onchaekTable td[data-k="loan"]{order:8;}
+    #onchaekTable td[data-k="note"]{order:9;}
+    #onchaekTable td[data-k="pub"]::before{content:'· ';}
+    #onchaekTable td[data-k="year"]::before{content:'· ';}
+    #onchaekTable td[data-k="total"]::before{content:'보유 ';}
+    #onchaekTable td[data-k="total"]::after{content:'권';}
+    #onchaekTable td[data-k="loan"]{color:var(--teal-deep);font-weight:600;}
+    #onchaekTable td[data-k="loan"]::before{content:'📖 ';}
+    #onchaekTable td[data-k="note"]{flex-basis:100%;}
+    .table-wrap{overflow:visible;}
+  }
+
   @media print{
-    .quicklinks, .global-search, nav.tabs, .controls, .pager, .print-btn,
+    .quicklinks, .global-search, .head-tools, nav.tabs, .controls, .pager, .print-btn,
     footer.site, .fav-btn, .fav-btn-inline, .copy-btn, .copy-btn-inline, .recent-bar { display:none !important; }
     body{background:#fff;zoom:100% !important;}
     header.site{background:#fff;padding:10px 0;}
@@ -1118,30 +1217,29 @@
 <body>
 
 <header class="site">
-  <div class="inner">
-    <h1 id="siteTitle"></h1>
-    <p class="sub" id="siteSubtitle"></p>
-    <p class="updated-date" id="siteUpdated"></p>
+  <div class="inner head-grid">
+    <div class="brand">
+      <div class="eyebrow" id="siteOrg"></div>
+      <h1 id="siteTitle"></h1>
+      <p class="sub" id="siteSubtitle"></p>
+      <p class="updated-date" id="siteUpdated"></p>
+    </div>
+    <div class="head-tools">
+      <div class="global-search">
+        <input type="search" id="globalSearchInput" placeholder="🔍 작가·작품·도서명으로 한번에 찾기" aria-label="통합검색">
+        <div id="globalSearchResults" class="global-results"></div>
+      </div>
+      <div class="quick-row">
+        <span id="quickLinks" class="quick-links"></span>
+        <span class="font-size-ctrl">
+          <span class="fs-label">글자</span>
+          <button type="button" id="fsDown" aria-label="글자 작게">가−</button>
+          <button type="button" id="fsUp" aria-label="글자 크게">가+</button>
+        </span>
+      </div>
+    </div>
   </div>
 </header>
-
-<div class="quicklinks">
-  <div class="inner">
-    <span id="quickLinks" style="display:contents"></span>
-    <span class="font-size-ctrl">
-      <span class="fs-label">글자 크기</span>
-      <button type="button" id="fsDown" aria-label="글자 작게">가−</button>
-      <button type="button" id="fsUp" aria-label="글자 크게">가+</button>
-    </span>
-  </div>
-</div>
-
-<div class="global-search">
-  <div class="inner">
-    <input type="text" id="globalSearchInput" placeholder="🔍 통합검색 — 작가·작품·도서명으로 강연·낭독극·온책읽기를 한번에 찾아보세요">
-    <div id="globalSearchResults" class="global-results"></div>
-  </div>
-</div>
 
 <nav class="tabs">
   <div class="inner">
@@ -1457,7 +1555,18 @@ document.addEventListener('toggle', e=>{
   setText('siteTitle', s.title);
   setText('siteSubtitle', s.subtitle);
   setText('siteUpdated', s.updated ? '최종 업데이트: '+fmtDate(s.updated) : '');
-  setText('siteFooter', s.footer);
+  setText('siteOrg', s.org || '운암초등학교 함박꽃북토리');
+  (function(){
+    const gd = SITE.guide||{};
+    const hours = (gd.hours||[]).find(h=>/개방|이용 시간/.test(h.label||''));
+    const parts = [];
+    parts.push(`<div class="ft-name">${escHtml(s.org || '운암초등학교 함박꽃북토리')}</div>`);
+    if(hours) parts.push(`<div class="ft-line">${escHtml(hours.label)} ${escHtml(hours.value)}</div>`);
+    if(gd.contact) parts.push(`<div class="ft-line">${fmt(gd.contact)}</div>`);
+    parts.push(`<div class="ft-links"><a href="#guide">도서관 이용 안내</a>${(s.links||[]).filter(l=>l.url).map(l=>`<a href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.label.replace(/^[^\p{L}\p{N}]+/u,''))}</a>`).join('')}<a href="admin.html" class="ft-admin">관리</a></div>`);
+    if(s.footer && !s.footer.includes(s.org || '운암초등학교 함박꽃북토리')) parts.push(`<div class="ft-small">${escHtml(s.footer)}</div>`);
+    setHtml('siteFooter', parts.join(''));
+  })();
   setHtml('quickLinks', (s.links||[]).filter(l=>l.label&&l.url).map(l=>`<a href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.label)}</a>`).join(''));
 
   // 1. 행사 신청
@@ -1697,6 +1806,14 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   function esc(s){
     return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+  // 표지 이미지가 없을 때 그리는 책 표지 (제목으로 색을 골라요)
+  const COVER_COLORS = ['#2F5D50','#8A5A3B','#4A5A85','#9A6B2E','#6B4E71','#3E6E7A','#8C4646'];
+  function fakeCover(d){
+    const t = d.b || d.l || '';
+    let h = 0; for(const ch of t) h = (h*31 + ch.charCodeAt(0)) >>> 0;
+    const author = String(d.a||'').split(/[(,;]/)[0].trim();
+    return `<div class="fake-cover" style="--cv:${COVER_COLORS[h % COVER_COLORS.length]}"><span class="fc-title">${esc(t)}</span><span class="fc-author">${esc(author)}</span></div>`;
+  }
 
   function computeFiltered(){
     const q = searchEl.value.trim().toLowerCase();
@@ -1739,9 +1856,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     } else {
       gridEl.innerHTML = pageItems.map(d=>{
         const displayTitle = d.l ? d.l : d.b;
-        const thumb = d.img
-          ? `<img src="${esc(d.img)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=noimg>이미지 없음</span>'">`
-          : '<span class="noimg">이미지 없음</span>';
+        const thumb = (d.img ? `<img src="${esc(d.img)}" alt="" loading="lazy" onerror="this.remove()">` : '') + fakeCover(d);
         const badges = [d.t, d.f].filter(Boolean)
           .map((v,i)=>`<span class="badge${i===1?' fmt':''}">${esc(v)}</span>`).join('');
         const link = d.u ? `<a class="link" href="${esc(d.u)}" target="_blank" rel="noopener" data-key="${esc(favKey(d))}">출판사 페이지에서 확인 →</a>` : '';
@@ -2094,7 +2209,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
         return va<vb ? -sortDir : va>vb ? sortDir : 0;
       });
     }
-    bodyEl.innerHTML = list.map(b=>'<tr>'+COLS.map(c=>`<td${c[2]?' class="num"':''}>${cell(b,c[0])}</td>`).join('')+'</tr>').join('');
+    bodyEl.innerHTML = list.map(b=>'<tr>'+COLS.map(c=>`<td data-k="${c[0]}" data-label="${c[1]}"${c[2]?' class="num"':''}>${cell(b,c[0])}</td>`).join('')+'</tr>').join('');
     countEl.textContent = list.length.toLocaleString()+'종';
   }
   document.querySelectorAll('#onchaekTable thead th').forEach(th=>{

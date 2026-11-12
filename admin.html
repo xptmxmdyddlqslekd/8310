@@ -557,10 +557,11 @@ function renderBasic(){
   p.append(el('h2',{},'기본 정보'), el('p',{class:'lead'},'사이트 맨 위 제목·날짜·바로가기 버튼과 맨 아래 문구예요.'));
   const upd = el('button',{class:'btn small', onclick:()=>{ s.updated = today(); markDirty('site'); renderBasic(); }}, '오늘 날짜로');
   p.append(card('머리말', [
+    {key:'org', label:'학교·도서관 이름 (제목 위 작은 글씨, 맨 아래)'},
     {key:'title', label:'사이트 제목'},
     {key:'subtitle', label:'부제'},
     {key:'updated', label:'최종 업데이트 날짜', type:'date', hint:'사이트 맨 위에 "최종 업데이트: ○년 ○월 ○일"로 보여요.'},
-    {key:'footer', label:'맨 아래 문구'}
+    {key:'footer', label:'맨 아래 작은 문구'}
   ], s, 'site', el('div',{style:'margin:-6px 0 8px'}, upd)));
   p.append(card('바로가기 버튼', [
     {key:'links', label:'버튼 목록', type:'list', fields:[{key:'label',label:'버튼 글자'},{key:'url',label:'링크 주소',type:'url'}],
