@@ -1406,12 +1406,13 @@
 
 <footer class="site" id="siteFooter"></footer>
 
-<!-- 데이터 파일 (admin.html에서 수정) -->
-<script src="data/site.js"></script>
-<script src="data/lectures.js"></script>
-<script src="data/readings.js"></script>
-<script src="data/onchaek.js"></script>
+<!-- 자료: Firebase(공용 정보)에서 읽고, 안 되면 data/*.js 백업 파일을 불러와요 -->
 <script>
+/* =====================================================================
+   화면 그리기 — Firebase(공용 정보)를 먼저 읽고, 안 되면 data/*.js(백업)로 그림
+   ===================================================================== */
+function startApp(){
+if(window.__appStarted) return; window.__appStarted = true;
 /* ================= 데이터 로드 ================= */
 const SITE = window.SITE || {};
 const LECTURES = window.LECTURES || [];
@@ -1433,8 +1434,21 @@ function setText(id, v){ const el=document.getElementById(id); if(el) el.textCon
 function setHtml(id, v){ const el=document.getElementById(id); if(el) el.innerHTML = v||''; }
 function setHref(id, v){ const el=document.getElementById(id); if(el){ if(v) el.href=v; else el.style.display='none'; } }
 function photosHtml(list){
-  return (list||[]).map(p=>`<img src="${escHtml(p.src)}" alt="${escHtml(p.alt)}"${p.fit==='contain'?' class="contain-photo"':''} draggable="false" oncontextmenu="return false" loading="lazy">`).join('');
+  return (list||[]).map(p=>{
+    const fs = String(p.src||'').startsWith('fs:');
+    const src = fs ? 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' : p.src;
+    return `<img src="${escHtml(src)}"${fs?` data-fs="${escHtml(p.src.slice(3))}"`:''} alt="${escHtml(p.alt)}"${p.fit==='contain'?' class="contain-photo"':''} draggable="false" oncontextmenu="return false" loading="lazy">`;
+  }).join('');
 }
+// 관리자 페이지에서 올린 사진은 "현장 사진 보기"를 펼칠 때 불러옴
+document.addEventListener('toggle', e=>{
+  const box = e.target;
+  if(!box.open || !box.querySelectorAll) return;
+  box.querySelectorAll('img[data-fs]').forEach(async img=>{
+    const id = img.dataset.fs; img.removeAttribute('data-fs');
+    try{ const data = window.__loadPhoto ? await window.__loadPhoto(id) : null; if(data) img.src = data; }catch(err){}
+  });
+}, true);
 
 /* ================= 문구 채우기 ================= */
 (function(){
@@ -2184,6 +2198,36 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     }
   });
 })();
+} // startApp 끝
+
+// 백업 자료(data/*.js) 불러온 뒤 그리기 — Firebase가 비어 있거나 막혀 있을 때
+window.__startWithBackup = function(){
+  if(window.__appStarted || window.__backupLoading) return;
+  window.__backupLoading = true;
+  const need = [['SITE','site'],['LECTURES','lectures'],['READINGS','readings'],['ONCHAEK','onchaek']].filter(([v])=>!window[v]);
+  let left = need.length;
+  const done = ()=>{ if(--left<=0) startApp(); };
+  if(!left) return startApp();
+  need.forEach(([v,f])=>{ const sc=document.createElement('script'); sc.src='data/'+f+'.js'; sc.onload=done; sc.onerror=done; document.head.appendChild(sc); });
+};
+// Firebase가 4초 안에 응답하지 않으면 백업으로
+setTimeout(()=>{ if(!window.__appStarted){ console.warn('공용 정보를 못 받아 백업 자료로 표시'); window.__startWithBackup(); } }, 4000);
+</script>
+<script type="module">
+// 공용 정보(Firebase) 읽기
+import { loadShared, loadPhoto } from './js/shared.js';
+window.__loadPhoto = loadPhoto;
+try{
+  const d = await loadShared();
+  if(d && !window.__appStarted && !window.__backupLoading){
+    if(d.site) window.SITE = d.site;
+    if(d.lectures) window.LECTURES = d.lectures;
+    if(d.readings) window.READINGS = d.readings;
+    if(d.onchaek) window.ONCHAEK = d.onchaek;
+    window.__dataSource = 'firebase';
+  }
+}catch(e){ console.warn('공용 정보 읽기 실패 — 백업 자료 사용', e); }
+window.__startWithBackup();   // 빠진 자료가 있으면 백업에서 채우고 그리기
 </script>
 </body>
 </html>
