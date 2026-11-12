@@ -1195,10 +1195,9 @@ function bindMonthTodos(root){
 function upcomingCard(pick){
   const up=upcoming();const todo=up.filter(e=>evRemain(e).length),ready=up.filter(e=>!evRemain(e).length);
   const line=e=>`<div class="evline" style="${evRemain(e).length&&evRange(e)[0]<=ymd(addD(TODAY,7))?"box-shadow:inset 3px 0 0 var(--accent)":""}"><div class="row" style="gap:6px">${evBadge(e)}<b>${esc(e.name)}</b> <span class="small faint">${evWhen(e)}</span></div>
-    <div class="chips">${evRemain(e).map(p=>pick?`<button type="button" class="chip todo" data-pick="${esc(e.name+" "+p)}" data-pcat="행사">${esc(p)} ＋</button>`:`<span class="chip todo">${esc(p)}</span>`).join("")}<span class="small faint">${e.prep.length?`준비 ${e.done.length}/${e.prep.length}`:""}</span></div></div>`;
+    <div class="chips">${!evRemain(e).length&&e.prep.length?`<span class="chip on">준비 끝 ✓</span>`:""}${evRemain(e).map(p=>pick?`<button type="button" class="chip todo" data-pick="${esc(e.name+" "+p)}" data-pcat="행사">${esc(p)} ＋</button>`:`<span class="chip todo">${esc(p)}</span>`).join("")}<span class="small faint">${e.prep.length?`준비 ${e.done.length}/${e.prep.length}`:""}</span></div></div>`;
   return `<section class="panel"><div class="phead"><h2><span class="dot"></span>준비중인 행사</h2><span class="small faint">진행 중 · 30일 안</span></div>
-  <div class="list">${todo.map(line).join("")||(up.length?"":`<div class="empty">30일 안에 잡힌 행사가 없어요.</div>`)}
-  ${ready.length?`<details><summary class="small muted" style="cursor:pointer;padding:4px 2px">준비 끝난 행사 ${ready.length}개</summary><div class="list" style="margin-top:6px">${ready.map(e=>`<div class="row small" style="gap:6px;padding:4px 2px">${evBadge(e)}<span>${esc(e.name)}</span><span class="faint">${evWhen(e)}</span></div>`).join("")}</div></details>`:""}</div></section>`;
+  <div class="list">${[...up].sort((a,b)=>evRange(a)[0].localeCompare(evRange(b)[0])).map(line).join("")||`<div class="empty">30일 안에 잡힌 행사가 없어요.</div>`}</div></section>`;
 }
 /* 할 일 알림판: 밀린 일(지난 60일 안, 표시 안 한 할 일) · 오늘 · 이번 주 남은 날 */
 function dueBoard(todays,work){
@@ -3616,12 +3615,13 @@ async function pubSync(force){if(store.mode!=="db"||!window.FB||!FB.auth.current
      "tasks":{"YYYY-MM-DD":[{"id","text","cat"}]}, "assets":{"아이디":{"name","type","data":"data:..."}} }
    파일 안에서 그림·첨부는 "/_blob/아이디"로 적고 assets에 넣으면 올리면서 바꿔 줌 */
 function addSummary(o){const n=[];const c=(k,l)=>{const v=o[k];const len=Array.isArray(v)?v.length:v&&typeof v==="object"?Object.values(v).reduce((a,x)=>a+(Array.isArray(x)?x.length:0),0):0;if(len)n.push(l+" "+len+"개")};
-  c("events","행사");c("promos","홍보물");c("yearly","연간 할 일");c("yearMemos","내년 메모");if(o.info){if((o.info.entries||[]).length)n.push("정보 "+o.info.entries.length+"개");if((o.info.docs||[]).length)n.push("공문 "+o.info.docs.length+"개")}c("calMemos","캘린더 메모");c("monthTodos","월 할 일");c("tasks","업무일지 할 일");return n.join(", ")||"넣을 내용 없음"}
-async function askAdd(o,fname){const sum=addSummary(o);if(!confirm(`${o.title?o.title+"\n\n":""}${sum}\n\n지금 수첩에 더할까요? 기존 내용은 그대로 두고, 같은 항목은 새 내용으로 고쳐요.`))return;await mergeAdd(o)}
+  c("events","행사");c("prepItems","준비 항목");c("promos","홍보물");c("yearly","연간 할 일");c("yearMemos","내년 메모");if(o.info){if((o.info.entries||[]).length)n.push("정보 "+o.info.entries.length+"개");if((o.info.docs||[]).length)n.push("공문 "+o.info.docs.length+"개")}c("calMemos","캘린더 메모");c("monthTodos","월 할 일");c("tasks","업무일지 할 일");return n.join(", ")||"넣을 내용 없음"}
+async function askAdd(o,fname){const sum=addSummary(o);if(!confirm(`${o.title?o.title+"\n\n":""}${sum}\n\n지금 수첩에 더할까요? 기존 내용은 그대로 두고, 같은 항목은 새 내용으로 고쳐요.`))return;closeModal();await mergeAdd(o)}
 async function mergeAdd(o){
   if(o.assets&&window.FBA){let txt=JSON.stringify(o);const ids=Object.keys(o.assets);let i=0;for(const id of ids){i++;setSave(`첨부 올리는 중… ${i}/${ids.length}`);const a=o.assets[id];const u=await FBA.putAsset(a.data,{name:a.name||"",type:a.type||""},id);txt=txt.split("/_blob/"+id).join(u)}o=JSON.parse(txt)}
-  let add=0,chg=0;const up=(arr,items,fixNew)=>{(items||[]).forEach(x0=>{const x=JSON.parse(JSON.stringify(x0));if(!x.id)x.id=uid();const i=arr.findIndex(y=>y.id===x.id);if(i>=0){Object.assign(arr[i],x);chg++}else{arr.push(fixNew?fixNew(x):x);add++}})};
-  up(core.events,o.events,x=>{const b=newEvent(x.name||"",x.type||"day",x.start,x.end||x.start);const e=Object.assign(b,x);postOf(e);return e});
+  let add=0,chg=0;const up=(arr,items,fixNew)=>{(items||[]).forEach(x0=>{const x=JSON.parse(JSON.stringify(x0));if(!x.id)x.id=uid();const i=arr.findIndex(y=>y.id===x.id);const pa=x.prepAdd;delete x.prepAdd;if(i>=0){Object.assign(arr[i],x);if(pa)arr[i].prep=[...new Set([...(arr[i].prep||[]),...pa])];chg++}else{const n=fixNew?fixNew(x):x;if(!n)return;if(pa)n.prep=[...new Set([...(n.prep||[]),...pa])];arr.push(n);add++}})};
+  (o.prepItems||[]).forEach(p=>{const nm=typeof p==="string"?p:p.name;if(nm&&!core.settings.prep.some(z=>z.name===nm)){core.settings.prep.push({name:nm,def:!!(p&&p.def)});add++}});
+  up(core.events,o.events,x=>{if(!x.name||!x.start)return null;const b=newEvent(x.name||"",x.type||"day",x.start,x.end||x.start);const e=Object.assign(b,x);postOf(e);return e});
   up(core.promos,o.promos);up(core.yearly,o.yearly);up(core.yearMemos,o.yearMemos);
   if(o.info){up(core.info.entries,o.info.entries);up(DOCS(),o.info.docs)}
   const upMap=(obj,src)=>Object.entries(src||{}).forEach(([k,list])=>{obj[k]=obj[k]||[];up(obj[k],list)});
