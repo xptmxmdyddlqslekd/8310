@@ -3620,8 +3620,8 @@ function addSummary(o){const n=[];const c=(k,l)=>{const v=o[k];const len=Array.i
 async function askAdd(o,fname){const sum=addSummary(o);if(!confirm(`${o.title?o.title+"\n\n":""}${sum}\n\n지금 수첩에 더할까요? 기존 내용은 그대로 두고, 같은 항목은 새 내용으로 고쳐요.`))return;await mergeAdd(o)}
 async function mergeAdd(o){
   if(o.assets&&window.FBA){let txt=JSON.stringify(o);const ids=Object.keys(o.assets);let i=0;for(const id of ids){i++;setSave(`첨부 올리는 중… ${i}/${ids.length}`);const a=o.assets[id];const u=await FBA.putAsset(a.data,{name:a.name||"",type:a.type||""},id);txt=txt.split("/_blob/"+id).join(u)}o=JSON.parse(txt)}
-  let add=0,chg=0;const up=(arr,items,fix)=>{(items||[]).forEach(x0=>{let x=fix?fix(x0):x0;if(!x.id)x.id=uid();const i=arr.findIndex(y=>y.id===x.id);if(i>=0){arr[i]=Object.assign({},arr[i],x);chg++}else{arr.push(x);add++}})};
-  up(core.events,o.events,x=>{const b=newEvent(x.name||"",x.type||"day",x.start,x.end||x.start);const e=Object.assign(b,JSON.parse(JSON.stringify(x)));postOf(e);return e});
+  let add=0,chg=0;const up=(arr,items,fixNew)=>{(items||[]).forEach(x0=>{const x=JSON.parse(JSON.stringify(x0));if(!x.id)x.id=uid();const i=arr.findIndex(y=>y.id===x.id);if(i>=0){Object.assign(arr[i],x);chg++}else{arr.push(fixNew?fixNew(x):x);add++}})};
+  up(core.events,o.events,x=>{const b=newEvent(x.name||"",x.type||"day",x.start,x.end||x.start);const e=Object.assign(b,x);postOf(e);return e});
   up(core.promos,o.promos);up(core.yearly,o.yearly);up(core.yearMemos,o.yearMemos);
   if(o.info){up(core.info.entries,o.info.entries);up(DOCS(),o.info.docs)}
   const upMap=(obj,src)=>Object.entries(src||{}).forEach(([k,list])=>{obj[k]=obj[k]||[];up(obj[k],list)});
