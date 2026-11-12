@@ -462,7 +462,7 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
     </div>
     <div class="today">
       <div class="datebox"><b id="tDate"></b><br><span class="small" id="tWeek"></span><br><span class="dday" id="tDday"></span></div>
-      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="gear" id="openUndo" type="button" aria-label="되돌리기 (Ctrl+Z)" title="되돌리기 (Ctrl+Z)" disabled style="opacity:.45">↶<span class="gl"> 되돌리기</span></button><button class="gear pconly" id="openMini" type="button" aria-label="작은 창으로 보기" title="작은 창으로 보기 (위젯처럼)">▣<span class="gl"> 작은 창</span></button><label class="gear" style="cursor:pointer" title="Claude가 만들어 준 추가 파일(.json)을 넣어요. 기존 내용은 그대로 둬요.">📥<span class="gl"> 추가 넣기</span><input type="file" id="addFile" accept=".json,application/json" hidden></label><button class="gear" id="openSearch" type="button" aria-label="검색">🔍<span class="gl"> 검색</span></button><button class="gear" id="openSet" type="button" aria-label="설정">⚙<span class="gl"> 설정</span></button></span>
+      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="gear" id="openUndo" type="button" aria-label="되돌리기 (Ctrl+Z)" title="되돌리기 (Ctrl+Z)" disabled style="opacity:.45">↶<span class="gl"> 되돌리기</span></button><button class="gear pconly" id="openMini" type="button" aria-label="작은 창으로 보기" title="작은 창으로 보기 (위젯처럼)">▣<span class="gl"> 작은 창</span></button><button class="gear" id="openSearch" type="button" aria-label="검색">🔍<span class="gl"> 검색</span></button><button class="gear" id="openSet" type="button" aria-label="설정">⚙<span class="gl"> 설정</span></button></span>
     </div>
   </header>
   <div id="note" class="notice" hidden></div>
@@ -1620,11 +1620,12 @@ function openSettings(sec,first){
     if(s==="alarm")return alarmHTML();if(s==="ics")return `<h3>캘린더 연동</h3>${xcalHTML()}${icsHTML()}`;
     if(s==="trash")return trashHTML();
     if(s==="backup")return `<h3>백업</h3><p class="small muted" style="margin:0">교무수첩에 적은 모든 내용(지난 업무일지 포함)을 파일 하나로 내려받아 보관하거나, 그 파일로 되살릴 수 있어요. 포스터 사진은 파일에 들어가지 않아요.</p>
-      <div class="evline"><span class="small">지금 저장 위치: <b>${store.mode==="db"?"Claude 계정 (어느 기기에서나 같은 내용)":"이 브라우저 (기기를 바꾸거나 브라우저 데이터를 지우면 사라져요)"}</b></span>
+      <div class="evline"><span class="small">지금 저장 위치: <b>${store.mode==="db"?"구글 계정 (어느 기기에서나 같은 내용)":"이 브라우저 (기기를 바꾸거나 브라우저 데이터를 지우면 사라져요)"}</b></span>
        <span class="small muted">마지막 백업 파일: ${core.lastBackup?new Date(core.lastBackup).toLocaleString("ko-KR",{dateStyle:"medium",timeStyle:"short"}):"아직 없어요"}${core.lastBackup&&Date.now()-core.lastBackup>30*864e5?` · <b style="color:var(--danger)">한 달이 넘었어요</b>`:""}</span></div>
       <label class="chk" style="align-items:center"><input type="checkbox" id="bkNoStu" ${ui.bkNoStu?"checked":""}><span class="t small">학생 이름·출결·누가기록은 빼고 내보내기 (다른 사람에게 파일을 줄 때)</span></label>
       <div class="row"><button type="button" class="btn" data-export>백업 파일 내보내기</button><label class="btn ghost" style="cursor:pointer">백업 불러오기<input type="file" accept=".json,application/json" id="impFile" hidden></label>
        <button type="button" class="linkbtn" data-undoimp>복원 전 상태로 되돌리기</button></div>
+      <div class="evline" style="margin-top:6px"><span class="small"><b>📥 추가 넣기</b> <span class="faint">Claude가 만들어 준 추가 파일(.json)을 넣어요. 지금 내용은 그대로 두고 파일에 든 것만 더해요. 같은 항목은 새 내용으로 고쳐요.</span></span><div class="row"><label class="btn sm" style="cursor:pointer">추가 파일 고르기<input type="file" id="addFile" accept=".json,application/json" hidden></label></div></div>
       <div id="impMsg" class="small"></div>${handoverHTML()}`;
   };
   const footHTML=`<span class="small faint">${first?"나와 학교 → 학사일정 순서로 채워 보세요.":"저장을 눌러야 바뀌어요."}</span><span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-sok type="button">${first?"시작하기":"저장"}</button>`;
