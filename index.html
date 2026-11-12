@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>도서관 활동 안내</title>
+<meta name="description" content="운암초등학교 함박꽃북토리 — 작가와의 만남·낭독극 신청, 온책읽기 도서 목록, 도서관 이용 안내">
+<meta property="og:type" content="website">
+<meta property="og:title" content="함박꽃북토리 · 도서관 활동 안내">
+<meta property="og:description" content="작가와의 만남·낭독극 신청, 온책읽기 도서 목록, 도서관 이용 안내를 한곳에서 확인하세요.">
+<meta property="og:image" content="https://xptmxmdyddlqslekd.github.io/8310/images/og.png">
+<meta property="og:url" content="https://xptmxmdyddlqslekd.github.io/8310/">
+<meta name="theme-color" content="#1F4B43">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231F4B43%22/><text x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22>📚</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1036,6 +1044,65 @@
   .recent-chip:hover{background:#FBF8F0;border-color:var(--mustard);}
 
   /* ---------- 인쇄 시 ---------- */
+  /* ---------- 이용 안내 · 일정 ---------- */
+  .guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .guide-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;}
+  .guide-card h3{font-size:16.5px;margin-bottom:12px;}
+  .guide-card.wide{grid-column:1/-1;}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13.5px;margin:0;}
+  .kv dt{font-weight:700;color:var(--teal-deep);white-space:nowrap;}
+  .kv dd{margin:0;color:var(--ink);}
+  .guide-card ul{margin:10px 0 0;padding-left:18px;font-size:13.5px;}
+  .guide-card li{margin:5px 0;}
+  .guide-card p{font-size:13.5px;margin:0;}
+  .loan-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .loan-table th,.loan-table td{border:1px solid var(--line);padding:8px 10px;text-align:center;}
+  .loan-table thead th{background:#F1EDE1;color:var(--teal-deep);}
+  .loan-table tbody th{background:#FAF7F1;}
+  .faq details{border-bottom:1px solid var(--line);padding:10px 2px;}
+  .faq details:last-child{border-bottom:0;}
+  .faq summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::before{content:'Q. ';color:var(--mustard-deep);font-weight:700;}
+  .faq details p{margin:8px 0 0 22px;color:var(--ink-soft);}
+  .sched{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .sched th,.sched td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top;}
+  .sched thead th{color:var(--ink-soft);font-weight:600;font-size:12.5px;}
+  .sched td.d{white-space:nowrap;font-weight:700;color:var(--teal-deep);}
+  .sched tr.past td{color:#A39E92;}
+  .sched tr.past td.d{color:#A39E92;font-weight:600;}
+  .sched .sub{display:block;font-size:12px;color:var(--ink-soft);}
+  .booked{background:#FFF8E6;border:1px solid #F0DFAF;border-radius:12px;padding:14px 18px;margin-top:16px;}
+  .booked h4{margin:0 0 6px;font-size:14px;color:var(--mustard-deep);}
+  .booked p.hint{margin:0 0 8px;font-size:12.5px;color:var(--ink-soft);}
+  .table-wrap-x{overflow-x:auto;}
+  button.lec-badge{border:0;font-family:inherit;cursor:pointer;}
+  button.lec-badge:hover{filter:brightness(.95);text-decoration:underline;}
+  .grade-chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:12px;background:#EAF0EE;color:var(--teal-deep);white-space:nowrap;margin:1px 2px 1px 0;}
+  @media (max-width:760px){
+    .guide-grid{grid-template-columns:1fr;}
+  }
+  /* ---------- 휴대폰 화면 ---------- */
+  @media (max-width:640px){
+    header.site{padding:16px 16px 14px;}
+    header.site h1{font-size:20px;}
+    header.site p.sub{font-size:12.5px;margin-top:4px;}
+    header.site p.updated-date{margin-top:4px;font-size:11px;}
+    .quicklinks .inner{padding:8px 16px;gap:6px;flex-wrap:nowrap;}
+    .quicklinks a{font-size:12px;padding:6px 10px;}
+    .fs-label{display:none;}
+    .global-search .inner{padding-top:8px;padding-bottom:8px;}
+    nav.tabs .inner{padding:0 8px;scrollbar-width:none;}
+    nav.tabs .inner::-webkit-scrollbar{display:none;}
+    nav.tabs button{padding:12px 12px;font-size:13.5px;}
+    .guide-card{padding:14px 16px;}
+    .stat-row{grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;}
+    .stat{padding:8px 10px;}
+    .stat .num{font-size:17px;}
+    .stat .label{font-size:11.5px;}
+    .controls select{flex:1 1 45%;min-width:0;}
+  }
+
   @media print{
     .quicklinks, .global-search, nav.tabs, .controls, .pager, .print-btn,
     footer.site, .fav-btn, .fav-btn-inline, .copy-btn, .copy-btn-inline, .recent-bar { display:none !important; }
@@ -1082,6 +1149,7 @@
     <button class="tab-btn" data-tab="lectures">작가와의 만남</button>
     <button class="tab-btn" data-tab="reading">낭독극</button>
     <button class="tab-btn" data-tab="onchaek">온책읽기 도서 목록</button>
+    <button class="tab-btn" data-tab="guide" id="tabBtnGuide">도서관 이용 안내</button>
   </div>
 </nav>
 
@@ -1107,6 +1175,11 @@
         <div class="tips-col tips-lecture"><h4 id="evTipLecTitle"></h4><p id="evTipLec"></p></div>
         <div class="tips-col tips-reading"><h4 id="evTipReadTitle"></h4><p id="evTipRead"></p></div>
       </div>
+      <div class="booked" id="evBooked" style="display:none">
+        <h4>📅 이미 확정된 행사 일정</h4>
+        <p class="hint">아래 날짜는 피해서 희망 일정을 골라 주세요.</p>
+        <div class="table-wrap-x"><table class="sched"><tbody id="evBookedBody"></tbody></table></div>
+      </div>
     </div>
   </section>
 
@@ -1131,7 +1204,7 @@
     </details>
     <div class="controls">
       <input type="text" id="lectureSearch" placeholder="작가, 도서명, 출판사로 검색">
-      <select id="lectureTarget"><option value="">대상 전체</option></select>
+      <select id="lectureTarget"><option value="초등 전체">초등 전체</option><option value="">대상 전체(청소년·성인 포함)</option></select>
       <select id="lectureFormat"><option value="">강연방식 전체</option></select>
       <label class="fav-filter"><input type="checkbox" id="lectureFavOnly"> ♥ 찜한 강연만 보기</label>
       <button type="button" class="toolbar-btn" id="lectureExportBtn">⬇ 목록 엑셀로 저장</button>
@@ -1248,6 +1321,12 @@
     <div class="stat-row" id="onchaekStats"></div>
     <div class="controls">
       <input type="text" id="onchaekSearch" placeholder="도서명, 저자, 출판사로 검색">
+      <select id="onchaekGradeFilter">
+        <option value="">추천 학년 전체</option>
+        <option value="1~2">1~2학년</option>
+        <option value="3~4">3~4학년</option>
+        <option value="5~6">5~6학년</option>
+      </select>
       <select id="onchaekLecFilter">
         <option value="">작가 강연 연계 전체</option>
         <option value="신청 가능">신청 가능</option>
@@ -1273,6 +1352,54 @@
       </table>
     </div>
     <p class="table-footnote" id="onchaekFoot"></p>
+  </section>
+
+  <!-- ===== 5. 도서관 이용 안내 ===== -->
+  <section id="panel-guide" class="panel">
+    <div class="panel-title">
+      <h2>도서관 이용 안내</h2>
+      <button class="print-btn" onclick="window.print()">🖨 인쇄</button>
+    </div>
+    <p class="update-note" id="gdIntro"></p>
+    <div class="guide-grid">
+      <div class="guide-card">
+        <h3>🕗 이용 시간</h3>
+        <dl class="kv" id="gdHours"></dl>
+      </div>
+      <div class="guide-card">
+        <h3>📖 대출 규정</h3>
+        <table class="loan-table">
+          <thead><tr><th>구분</th><th>권수</th><th>기간</th><th>연장</th></tr></thead>
+          <tbody id="gdLoans"></tbody>
+        </table>
+        <ul id="gdLoanNotes"></ul>
+      </div>
+      <div class="guide-card">
+        <h3>🤫 도서관에서 지켜요</h3>
+        <ul id="gdRules" style="margin-top:0"></ul>
+      </div>
+      <div class="guide-card">
+        <h3>🏫 도서관 활용 수업 (선생님용)</h3>
+        <p id="gdClass"></p>
+        <div id="gdContactBox" style="margin-top:14px;display:none">
+          <h3 style="margin-bottom:6px">☎ 문의</h3>
+          <p id="gdContact"></p>
+        </div>
+      </div>
+      <div class="guide-card wide" id="gdSchedBox">
+        <h3>📅 올해 독서행사 일정</h3>
+        <div class="table-wrap-x">
+          <table class="sched">
+            <thead><tr><th>날짜</th><th>행사</th><th>대상</th><th>장소·시간</th></tr></thead>
+            <tbody id="gdSched"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="guide-card wide faq" id="gdFaqBox">
+        <h3>❓ 자주 묻는 질문</h3>
+        <div id="gdFaq"></div>
+      </div>
+    </div>
   </section>
 
 </main>
@@ -1332,7 +1459,7 @@ function photosHtml(list){
   setText('evTipReadTitle', ev.tipReadingTitle); setHtml('evTipRead', fmt(ev.tipReading));
 
   // 2. 작가와의 만남
-  setHtml('lecNotice', fmt(lc.notice));
+  setHtml('lecNotice', fmt(lc.notice) + (lc.listDate ? ` <strong>(목록 기준일: ${fmtDate(lc.listDate)})</strong>` : ''));
   if(lc.caseShow===false) document.getElementById('lecCase').style.display='none';
   setText('lecCaseSummary', '🏫 '+(lc.caseLabel||'')+' 보기');
   setText('lecCaseTag', lc.caseLabel); setText('lecCaseTitle', lc.caseTitle);
@@ -1361,10 +1488,59 @@ function photosHtml(list){
   // 4. 온책읽기
   setText('onchaekIntro', oc.intro);
 
-  // 처음 열릴 탭
-  const first = ev.show===false ? 'lectures' : 'event';
-  document.querySelector(`.tab-btn[data-tab="${first}"]`).classList.add('active');
-  document.getElementById('panel-'+first).classList.add('active');
+  // 5. 이용 안내
+  const gd = SITE.guide||{};
+  if(gd.show===false){ document.getElementById('tabBtnGuide').style.display='none'; document.getElementById('panel-guide').style.display='none'; }
+  setHtml('gdIntro', fmt(gd.intro));
+  if(!gd.intro) document.getElementById('gdIntro').style.display='none';
+  setHtml('gdHours', (gd.hours||[]).filter(h=>h.label||h.value).map(h=>`<dt>${escHtml(h.label)}</dt><dd>${fmt(h.value)}</dd>`).join(''));
+  setHtml('gdLoans', (gd.loans||[]).map(l=>`<tr><th>${escHtml(l.who)}</th><td>${escHtml(l.count)}</td><td>${escHtml(l.days)}</td><td>${escHtml(l.renew)}</td></tr>`).join(''));
+  setHtml('gdLoanNotes', (gd.loanNotes||[]).filter(Boolean).map(n=>`<li>${fmt(n)}</li>`).join(''));
+  setHtml('gdRules', (gd.rules||[]).filter(Boolean).map(n=>`<li>${fmt(n)}</li>`).join(''));
+  setHtml('gdClass', fmt(gd.classInfo));
+  if(gd.contact){ document.getElementById('gdContactBox').style.display='block'; setHtml('gdContact', fmt(gd.contact)); }
+  const faq = (gd.faq||[]).filter(f=>f.q);
+  if(!faq.length) document.getElementById('gdFaqBox').style.display='none';
+  setHtml('gdFaq', faq.map(f=>`<details><summary>${escHtml(f.q)}</summary><p>${fmt(f.a)}</p></details>`).join(''));
+
+  // 행사 일정 (이용 안내 탭 + 신청 탭의 '확정된 일정')
+  const WD = '일월화수목금토';
+  const todayIso = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+  function dateLabel(iso){
+    const m = String(iso||'').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if(!m) return escHtml(iso||'날짜 미정');
+    const d = new Date(+m[1], +m[2]-1, +m[3]);
+    return `${+m[2]}월 ${+m[3]}일(${WD[d.getDay()]})`;
+  }
+  const sched = (SITE.schedule||[]).filter(e=>e.title).slice().sort((a,b)=>String(a.date||'9').localeCompare(String(b.date||'9')));
+  const isPast = e => /^\d{4}-\d{2}-\d{2}$/.test(e.date||'') && e.date < todayIso;
+  const where = e => [e.place, e.time].filter(Boolean).join(' · ');
+  if(!sched.length) document.getElementById('gdSchedBox').style.display='none';
+  setHtml('gdSched', sched.map(e=>`<tr class="${isPast(e)?'past':''}"><td class="d">${dateLabel(e.date)}</td><td>${escHtml(e.title)}${e.note?`<span class="sub">${escHtml(e.note)}</span>`:''}</td><td>${escHtml(e.target)}</td><td>${escHtml(where(e))}</td></tr>`).join(''));
+  const upcoming = sched.filter(e=>!isPast(e));
+  if(upcoming.length){
+    document.getElementById('evBooked').style.display='block';
+    setHtml('evBookedBody', upcoming.map(e=>`<tr><td class="d">${dateLabel(e.date)}</td><td>${escHtml(e.title)}</td><td>${escHtml(e.target)}</td><td>${escHtml(where(e))}</td></tr>`).join(''));
+  }
+})();
+
+/* ================= 탭 전환 + 주소(#탭이름)로 바로 열기 ================= */
+function openTab(name, push){
+  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if(!btn || btn.style.display==='none') return false;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(push!==false){ try{ history.replaceState(null,'','#'+name); }catch(e){} }
+  if(btn.scrollIntoView) btn.scrollIntoView({block:'nearest', inline:'center'});
+  return true;
+}
+(function(){
+  const fromHash = (location.hash||'').replace('#','');
+  const firstVisible = [...document.querySelectorAll('.tab-btn')].find(b=>b.style.display!=='none');
+  if(!openTab(fromHash, false)) openTab(firstVisible ? firstVisible.dataset.tab : 'lectures', false);
+  window.addEventListener('hashchange', ()=>openTab((location.hash||'').replace('#',''), false));
 })();
 
 /* ================= 찜(즐겨찾기) 저장 헬퍼 ================= */
@@ -1440,14 +1616,8 @@ function legacyCopy(text){
   if(downBtn) downBtn.addEventListener('click', ()=>{ if(idx>0){ idx--; apply(); } });
 })();
 
-/* ================= 탭 전환 ================= */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
-  });
+  btn.addEventListener('click', ()=>{ openTab(btn.dataset.tab); window.scrollTo({top:0}); });
 });
 
 /* ================= 1. 작가와의 만남 ================= */
@@ -1502,6 +1672,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     return [...cats];
   }
 
+  if((SITE.lectures||{}).defaultElementary===false) targetEl.value='';
   TARGET_ORDER.forEach(v=>{
     const o=document.createElement('option'); o.value=v; o.textContent=v; targetEl.appendChild(o);
   });
@@ -1520,7 +1691,10 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const favOnly = favOnlyEl.checked;
     filtered = LECTURES.filter(d=>{
       if(favOnly && !favorites.has(favKey(d))) return false;
-      if(t && !targetCategories(d.t).includes(t)) return false;
+      if(t==='초등 전체'){
+        const cats = targetCategories(d.t);
+        if(cats.length && !cats.some(c=>c.startsWith('초등'))) return false;
+      } else if(t && !targetCategories(d.t).includes(t)) return false;
       if(f && !formatCategories(d.f).includes(f)) return false;
       if(q){
         const hay = (d.a+' '+d.b+' '+d.p+' '+d.l).toLowerCase();
@@ -1828,8 +2002,11 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     return Object.assign({}, b, {no:i+1, total: total||'-', plannedNum:n(b.planned), loan, note: notes.join(', ')});
   });
   const showPlanned = books.some(b=>b.plannedNum>0);
+  const showGrade = books.some(b=>b.grade);
+  const gradeFilterEl = document.getElementById('onchaekGradeFilter');
+  if(!showGrade) gradeFilterEl.style.display='none';
   const COLS = [
-    ['no','No','num'],['title','도서명'],['author','저자'],['lecStatus','작가 강연'],['readable','낭독극'],
+    ['no','No','num'],['title','도서명'],...(showGrade ? [['grade','추천 학년']] : []),['author','저자'],['lecStatus','작가 강연'],['readable','낭독극'],
     ['pub','출판사'],['year','출판년도','num'],['total','보유권수','num'],
     ...(showPlanned ? [['plannedNum','구매예정','num']] : []),
     ['loan','대출현황'],['note','비고']
@@ -1862,7 +2039,15 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(b.lecAltBooks) tipParts.push('타 도서: '+b.lecAltBooks);
     if(b.lecAltPub) tipParts.push('타 출판사 검색: '+b.lecAltPub);
     if(b.lecProgress) tipParts.push('진행: '+b.lecProgress);
-    return `<span class="lec-badge ${cls}" title="${esc(tipParts.join(' · '))}">${esc(b.lecStatus)}</span>`;
+    const tip = tipParts.join(' · ');
+    if(b.lecStatus==='불가') return `<span class="lec-badge ${cls}" title="${esc(tip)}">${esc(b.lecStatus)}</span>`;
+    return `<button type="button" class="lec-badge ${cls}" data-author="${esc(authorName(b.author))}" data-title="${esc(b.title)}" title="${esc((tip?tip+' · ':'')+'누르면 이 작가의 강연을 찾아봐요')}">${esc(b.lecStatus)} ›</button>`;
+  }
+  // "이수용 글;김도아 그림" → "이수용"
+  function authorName(a){
+    let x = String(a||'').split(/[;,(]/)[0];
+    x = x.replace(/지은이\s*:?|지음|글\s*·?\s*그림|글|그림|옮김|엮음|외$/g,' ').replace(/\s+/g,' ').trim();
+    return x.split(' ')[0] || '';
   }
   function readableBadge(b){
     if(!b.readable) return '';
@@ -1874,13 +2059,15 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       case 'readable': return readableBadge(b);
       case 'note': return `<span class="note-cell">${esc(b.note)}</span>`;
       case 'plannedNum': return b.plannedNum ? b.plannedNum : '';
+      case 'grade': return String(b.grade||'').split(',').map(g=>g.trim()).filter(Boolean).map(g=>`<span class="grade-chip">${esc(g)}</span>`).join('');
       default: return esc(b[key]);
     }
   }
   function renderRows(){
     const q = searchEl.value.trim().toLowerCase();
-    const lf = lecFilterEl.value, rf = readableFilterEl.value;
+    const lf = lecFilterEl.value, rf = readableFilterEl.value, gf = gradeFilterEl.value;
     let list = books.filter(b=>{
+      if(gf && !String(b.grade||'').includes(gf)) return false;
       if(lf && b.lecStatus!==lf) return false;
       if(rf && !b.readable) return false;
       return !q || (b.title+' '+b.author+' '+b.pub).toLowerCase().includes(q);
@@ -1906,6 +2093,19 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   searchEl.addEventListener('input', renderRows);
   lecFilterEl.addEventListener('change', renderRows);
   readableFilterEl.addEventListener('change', renderRows);
+  gradeFilterEl.addEventListener('change', renderRows);
+  // 강연 배지 → 작가와의 만남 탭에서 검색
+  bodyEl.addEventListener('click', e=>{
+    const btn = e.target.closest('button.lec-badge'); if(!btn) return;
+    const name = btn.dataset.author, title = btn.dataset.title;
+    const has = q => q && LECTURES.some(d=>(d.a+' '+d.b+' '+d.p+' '+d.l).toLowerCase().includes(q.toLowerCase()));
+    const q = has(name) ? name : has(title) ? title : name;
+    openTab('lectures');
+    const t = document.getElementById('lectureTarget'); if(t){ t.value=''; t.dispatchEvent(new Event('change')); }
+    const el = document.getElementById('lectureSearch');
+    el.value = q; el.dispatchEvent(new Event('input', {bubbles:true}));
+    setTimeout(()=>el.scrollIntoView({behavior:'smooth', block:'center'}), 50);
+  });
   renderRows();
 })();
 

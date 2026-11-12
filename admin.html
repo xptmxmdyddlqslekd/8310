@@ -102,6 +102,7 @@
     <button data-page="lectures">작가와의 만남<span class="dot"></span></button>
     <button data-page="reading">낭독극<span class="dot"></span></button>
     <button data-page="onchaek">온책읽기 목록<span class="dot"></span></button>
+    <button data-page="guide">이용 안내<span class="dot"></span></button>
     <button data-page="help">사용법</button>
   </nav>
   <main>
@@ -111,6 +112,7 @@
     <section class="page" id="page-lectures"></section>
     <section class="page" id="page-reading"></section>
     <section class="page" id="page-onchaek"></section>
+    <section class="page" id="page-guide"></section>
     <section class="page help" id="page-help"></section>
   </main>
 </div>
@@ -133,7 +135,7 @@ const FILES = {
   readings: {path:'data/readings.js', varName:'READINGS', comment:'낭독극 작품 목록 (책을 읽어 주는 사람들)'},
   onchaek:  {path:'data/onchaek.js',  varName:'ONCHAEK',  comment:'온책읽기 도서 목록 (reg=DLS 등록권수, unreg=미등록권수, avail=대출가능, out=대출중, lost=소재불명, damaged=파손/가치상실, planned=구매예정)'}
 };
-const PAGE_FILES = {basic:['site'], event:['site'], lectures:['site','lectures'], reading:['site','readings'], onchaek:['site','onchaek']};
+const PAGE_FILES = {basic:['site'], event:['site'], guide:['site'], lectures:['site','lectures'], reading:['site','readings'], onchaek:['site','onchaek']};
 
 let DATA = {
   site: clone(window.SITE || {}),
@@ -336,7 +338,7 @@ function field(obj, def, file){
           el('button',{class:'btn small', title:'위로', onclick:()=>{ if(i>0){ [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; markDirty(file); render(); } }},'▲'),
           el('button',{class:'btn small', title:'아래로', onclick:()=>{ if(i<arr.length-1){ [arr[i+1],arr[i]]=[arr[i],arr[i+1]]; markDirty(file); render(); } }},'▼'),
           el('button',{class:'btn small danger', onclick:()=>{ if(confirm('삭제할까요?')){ arr.splice(i,1); markDirty(file); render(); } }},'삭제'))));
-        const grid = el('div',{class: def.fields.length===3 ? 'row3' : def.fields.length===2 && !def.fields.some(f=>f.type==='textarea') ? 'row2' : ''});
+        const grid = el('div',{class: def.fields.length>=3 ? 'row3' : def.fields.length===2 && !def.fields.some(f=>f.type==='textarea') ? 'row2' : ''});
         def.fields.forEach(f=>grid.append(field(item, f, file)));
         it.append(grid); box.append(it);
       });
@@ -543,6 +545,12 @@ function renderEvent(){
     {key:'steps', label:'단계 (순서대로 번호가 붙어요)', type:'list', fields:[{key:'title',label:'단계 제목'},{key:'text',label:'설명',type:'textarea'}],
      hint:'날짜 예시(예: 12월 2일(수) 1~2교시)는 학기마다 지난 날짜가 되지 않게 바꿔 주세요.'}
   ], ev, 'site'));
+  p.append(card('확정된 행사 일정', [
+    {key:'schedule', label:'행사 일정', type:'list', fields:[
+      {key:'date',label:'날짜',type:'date'},{key:'title',label:'행사 이름'},{key:'target',label:'대상 (예: 3·4학년)'},
+      {key:'time',label:'시간 (예: 2~3교시)'},{key:'place',label:'장소'},{key:'note',label:'메모 (예: 선정도서)'}],
+     hint:'여기 넣은 일정은 <b>이용 안내 탭의 "올해 독서행사 일정"</b>에 나오고, 아직 지나지 않은 일정은 <b>신청 탭의 "이미 확정된 행사 일정"</b>에도 나와요. 새 학년도에는 지난해 일정을 지우세요.'}
+  ], DATA.site, 'site'));
   p.append(card('미리 알아두세요', [
     {key:'tipLectureTitle', label:'작가와의 만남 상자 제목'},
     {key:'tipLecture', label:'작가와의 만남 안내', type:'textarea', hint:BOLD_HINT},
@@ -565,7 +573,11 @@ function renderLectures(){
   const p = document.getElementById('page-lectures'); p.innerHTML='';
   const lc = DATA.site.lectures = DATA.site.lectures || {};
   p.append(el('h2',{},'작가와의 만남'), el('p',{class:'lead'},'안내 문구, 우리 학교 사례, 강연 목록을 고칠 수 있어요.'));
-  p.append(card('안내 문구', [{key:'notice', label:'목록 위 안내', type:'textarea', hint:BOLD_HINT}], lc, 'site'));
+  p.append(card('안내 문구', [
+    {key:'notice', label:'목록 위 안내', type:'textarea', hint:BOLD_HINT},
+    {key:'listDate', label:'강연 목록 기준일', type:'date', hint:'강연 목록을 새로 불러오면 이 날짜도 바꿔 주세요. 안내 문구 끝에 "(목록 기준일: …)"로 보여요.'},
+    {key:'defaultElementary', label:'처음에 초등 대상 강연만 보이기 (청소년·성인 대상 숨기기)', type:'bool'}
+  ], lc, 'site'));
   p.append(card('우리 학교 사례', [
     {key:'caseShow', label:'사례 상자 보이기', type:'bool'},
     {key:'caseLabel', label:'상자 이름', hint:'예: "작년 우리 학교 사례" → "2026학년도 우리 학교 사례"'},
@@ -658,6 +670,7 @@ function renderReading(){
 const OC_COLS = [
   {key:'title', label:'도서명', width:'180px'}, {key:'author', label:'저자', width:'130px'}, {key:'pub', label:'출판사', width:'100px'},
   {key:'year', label:'출판년도', width:'60px'},
+  {key:'grade', label:'추천 학년', width:'90px', tip:'1~2 / 3~4 / 5~6 중에서 쓰고, 여러 개면 쉼표로 (예: 3~4, 5~6)'},
   {key:'reg', label:'DLS 등록', type:'num', tip:'DLS 엑셀을 불러오면 자동으로 채워져요'},
   {key:'unreg', label:'미등록', type:'num', tip:'DLS에 등록 안 된 책 수 (직접 입력)'},
   {key:'avail', label:'대출가능', type:'num'}, {key:'out', label:'대출중', type:'num'},
@@ -689,10 +702,10 @@ function renderOnchaek(){
   p.append(dls);
   p.append(card('② 안내 문구', [{key:'intro', label:'배지 설명 문구'}], oc, 'site'));
   const c = el('div',{class:'card'}, el('h3',{},'③ 도서 목록 직접 고치기'));
-  c.append(el('div',{class:'hint', style:'margin-bottom:8px', html:'사이트의 <b>보유권수 = DLS 등록 + 미등록</b>, <b>대출현황 = 대출가능 (대출중)</b>으로 보여요. 비고에는 소재불명·파손·미등록 권수가 자동으로 붙어요. 사이트에서는 도서명 가나다순으로 보여요.'}));
+  c.append(el('div',{class:'hint', style:'margin-bottom:8px', html:'<b>추천 학년</b>은 <code>1~2</code>, <code>3~4</code>, <code>5~6</code>으로 쓰고 여러 개면 쉼표로 이어 쓰세요 (예: <code>3~4, 5~6</code>). 사이트의 학년 필터가 이 글자로 찾아요.<br>사이트의 <b>보유권수 = DLS 등록 + 미등록</b>, <b>대출현황 = 대출가능 (대출중)</b>으로 보여요. 비고에는 소재불명·파손·미등록 권수가 자동으로 붙어요. 사이트에서는 도서명 가나다순으로 보여요.'}));
   const ed = tableEditor({
     getRows:()=>DATA.onchaek.books, cols:OC_COLS, file:'onchaek', pageSize:60, searchKeys:['title','author','pub'],
-    newRow:()=>({title:'',author:'',pub:'',year:'',reg:0,unreg:0,avail:0,out:0,lost:0,damaged:0,planned:0,lecStatus:'',lecDetail:'',lecPath:'',lecAltBooks:'',lecAltPub:'',lecProgress:'',lecNote:'',readable:false,memo:''}),
+    newRow:()=>({title:'',author:'',pub:'',year:'',grade:'',reg:0,unreg:0,avail:0,out:0,lost:0,damaged:0,planned:0,lecStatus:'',lecDetail:'',lecPath:'',lecAltBooks:'',lecAltPub:'',lecProgress:'',lecNote:'',readable:false,memo:''}),
     toolbar:[ el('button',{class:'btn small', onclick:()=>exportExcel('온책읽기_목록.xlsx', OC_COLS.map(c=>c.label), DATA.onchaek.books.map(b=>OC_COLS.map(c=>c.type==='bool'?(b[c.key]?'O':''):(b[c.key]??''))))}, '⬇ 엑셀로 내보내기') ]
   });
   c.append(ed); p.append(c);
@@ -731,7 +744,7 @@ async function importDLS(){
   for(const [k,a] of agg){
     if(used.has(k)) continue;
     const st = a.st, total = Object.values(st).reduce((x,y)=>x+y,0);
-    const nb = {title:a.title, author:a.author, pub:a.pub, year:a.year, reg:total, unreg:0, avail:st['대출가능']||0, out:st['대출중']||0, lost:st['소재불명']||0,
+    const nb = {title:a.title, author:a.author, pub:a.pub, year:a.year, grade:'', reg:total, unreg:0, avail:st['대출가능']||0, out:st['대출중']||0, lost:st['소재불명']||0,
       damaged:(st['가치상실']||0)+(st['파손']||0)+(st['폐기']||0), planned:0, lecStatus:'', lecDetail:'', lecPath:'', lecAltBooks:'', lecAltPub:'', lecProgress:'', lecNote:'', readable:false, memo:''};
     books.push(nb); added.push(nb);
   }
@@ -749,6 +762,27 @@ async function importDLS(){
     <h4>엑셀에 없는 책 (${missing.length}) — 노란색 줄</h4>${li(missing.map(b=>b.title))}
     <p class="hint">미등록 도서면 그대로 두고 <b>미등록</b> 칸에 권수를 넣으세요. 목록에서 뺄 책이면 삭제하세요.</p>
     <p><b>확인한 뒤 💾 저장을 눌러야 사이트에 반영돼요.</b></p>`);
+}
+
+/* =====================================================================
+   화면: 이용 안내
+   ===================================================================== */
+function renderGuide(){
+  const p = document.getElementById('page-guide'); p.innerHTML='';
+  const gd = DATA.site.guide = DATA.site.guide || {};
+  p.append(el('h2',{},'도서관 이용 안내'), el('p',{class:'lead'},'이용 시간, 대출 규정, 이용 수칙, 연락처, 자주 묻는 질문이에요. 운영 규정이 바뀌면 여기를 고쳐 주세요.'));
+  p.append(card('탭 표시', [{key:'show', label:'"도서관 이용 안내" 탭 보이기', type:'bool'}, {key:'intro', label:'맨 위 안내', type:'textarea'}], gd, 'site'));
+  p.append(card('이용 시간', [{key:'hours', label:'항목', type:'list', fields:[{key:'label',label:'항목'},{key:'value',label:'내용'}]}], gd, 'site'));
+  p.append(card('대출 규정', [
+    {key:'loans', label:'대출 권수·기간', type:'list', fields:[{key:'who',label:'구분'},{key:'count',label:'권수'},{key:'days',label:'기간'},{key:'renew',label:'연장'}]},
+    {key:'loanNotes', label:'대출 관련 안내 (한 줄에 하나)', type:'strlist', hint:BOLD_HINT}
+  ], gd, 'site'));
+  p.append(card('이용 수칙', [{key:'rules', label:'도서관에서 지켜요 (한 줄에 하나)', type:'strlist'}], gd, 'site'));
+  p.append(card('도서관 활용 수업 · 연락처', [
+    {key:'classInfo', label:'도서관 활용 수업 안내 (선생님용)', type:'textarea', hint:BOLD_HINT},
+    {key:'contact', label:'문의 연락처', type:'textarea', hint:'비워 두면 사이트에 표시되지 않아요. 예: 사서교사 ○○○ · 내선 000'}
+  ], gd, 'site'));
+  p.append(card('자주 묻는 질문', [{key:'faq', label:'질문과 답', type:'list', fields:[{key:'q',label:'질문'},{key:'a',label:'답',type:'textarea'}]}], gd, 'site'));
 }
 
 /* =====================================================================
@@ -774,7 +808,9 @@ function renderHelp(){
       <li><b>작가와의 만남 → 우리 학교 사례</b>: 상자 이름("작년 우리 학교 사례"), 사례를 지난해 행사로 바꾸기, 현장 사진 교체.</li>
       <li><b>작가와의 만남 → 강연 목록</b>: 강연 목록 수집 엑셀을 <b>엑셀로 불러오기 → 전체 바꾸기</b>.</li>
       <li><b>낭독극</b>: 사례(작년에 했다면), 비용·연락처, 새 작품 목록 엑셀 → 전체 바꾸기, 기준일.</li>
-      <li><b>온책읽기 목록</b>: DLS 리스트 반출 → <b>DLS 엑셀 불러오기</b>. 올해 구입할 책은 "한 줄 추가" 후 <b>구매예정</b> 칸에 권수.</li>
+      <li><b>온책읽기 목록</b>: DLS 리스트 반출 → <b>DLS 엑셀 불러오기</b>. 올해 구입할 책은 "한 줄 추가" 후 <b>구매예정</b> 칸에 권수. 새 책은 <b>추천 학년</b>도 채우기.</li>
+      <li><b>독서행사 신청 → 확정된 행사 일정</b>: 지난해 일정 지우고 올해 확정된 행사 넣기.</li>
+      <li><b>이용 안내</b>: 운영 규정이 바뀌었으면 대출 규정·이용 시간 고치기, 연락처 확인.</li>
     </ul>
   </div>
   <div class="card">
@@ -782,6 +818,7 @@ function renderHelp(){
     <ul>
       <li>이 관리 화면 주소(<code>…/8310/admin.html</code>)는 공개 사이트에서도 열리지만, <b>사이트 폴더를 연결하고 GitHub에 올릴 수 있는 사람만</b> 실제로 내용을 바꿀 수 있어요. 다른 사람이 열어 봐도 사이트는 바뀌지 않아요.</li>
       <li>실수로 잘못 저장했으면 GitHub Desktop의 <b>Changes</b>에서 그 파일을 오른쪽 클릭 → <b>Discard changes</b>로 되돌릴 수 있어요 (Commit 하기 전까지).</li>
+      <li>탭을 바로 여는 주소: 주소 뒤에 <code>#event</code>(행사 신청), <code>#lectures</code>(작가와의 만남), <code>#reading</code>(낭독극), <code>#onchaek</code>(온책읽기), <code>#guide</code>(이용 안내)를 붙여요. 예: <code>https://xptmxmdyddlqslekd.github.io/8310/#onchaek</code></li>
       <li>사진은 <code>images</code> 폴더에 저장돼요. 사진을 "빼기" 해도 파일은 남으니, 필요 없으면 폴더에서 지우면 돼요.</li>
       <li>엑셀 불러오기·내보내기는 인터넷이 연결되어 있어야 돼요.</li>
       <li>파일 구성: <code>index.html</code>(사이트 화면), <code>admin.html</code>(관리 화면), <code>data/site.js</code>(문구·링크·사진), <code>data/lectures.js</code>(강연), <code>data/readings.js</code>(낭독극), <code>data/onchaek.js</code>(온책읽기), <code>images/</code>(사진).</li>
@@ -792,7 +829,7 @@ function renderHelp(){
 /* =====================================================================
    시작
    ===================================================================== */
-function renderAll(){ renderBasic(); renderEvent(); renderLectures(); renderReading(); renderOnchaek(); renderHelp(); }
+function renderAll(){ renderBasic(); renderEvent(); renderLectures(); renderReading(); renderOnchaek(); renderGuide(); renderHelp(); }
 document.querySelectorAll('#nav button').forEach(b=>b.addEventListener('click', ()=>{
   document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
