@@ -462,7 +462,7 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
     </div>
     <div class="today">
       <div class="datebox"><b id="tDate"></b><br><span class="small" id="tWeek"></span><br><span class="dday" id="tDday"></span></div>
-      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="gear" id="openUndo" type="button" aria-label="되돌리기 (Ctrl+Z)" title="되돌리기 (Ctrl+Z)" disabled style="opacity:.45">↶<span class="gl"> 되돌리기</span></button><button class="gear pconly" id="openMini" type="button" aria-label="작은 창으로 보기" title="작은 창으로 보기 (위젯처럼)">▣<span class="gl"> 작은 창</span></button><button class="gear" id="openSearch" type="button" aria-label="검색">🔍<span class="gl"> 검색</span></button><button class="gear" id="openSet" type="button" aria-label="설정">⚙<span class="gl"> 설정</span></button></span>
+      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="gear" id="openUndo" type="button" aria-label="되돌리기 (Ctrl+Z)" title="되돌리기 (Ctrl+Z)" disabled style="opacity:.45">↶<span class="gl"> 되돌리기</span></button><button class="gear pconly" id="openMini" type="button" aria-label="작은 창으로 보기" title="작은 창으로 보기 (위젯처럼)">▣<span class="gl"> 작은 창</span></button><label class="gear" style="cursor:pointer" title="Claude가 만들어 준 추가 파일(.json)을 넣어요. 기존 내용은 그대로 둬요.">📥<span class="gl"> 추가 넣기</span><input type="file" id="addFile" accept=".json,application/json" hidden></label><button class="gear" id="openSearch" type="button" aria-label="검색">🔍<span class="gl"> 검색</span></button><button class="gear" id="openSet" type="button" aria-label="설정">⚙<span class="gl"> 설정</span></button></span>
     </div>
   </header>
   <div id="note" class="notice" hidden></div>
@@ -1643,7 +1643,7 @@ function openSettings(sec,first){
     if(d.cn!=null)st.cats[+d.cn].name=t.value;
     if(d.cc!=null){st.cats[+d.cc].color=t.value;t.parentElement.style.background=t.value}});
   m.addEventListener("change",e=>{if(e.target.id==="bkNoStu")ui.bkNoStu=e.target.checked;const d=e.target.dataset;if(d.prd!=null)st.prep[+d.prd].def=e.target.checked;if(d.tabOn)st.tabs[d.tabOn]=e.target.checked;
-    if(e.target.id==="impFile"){const f=e.target.files[0];if(!f)return;e.target.value="";f.text().then(async tx=>{let o;try{o=JSON.parse(tx);if(!o.core||!o.core.settings)throw 0}catch(x){$("#impMsg").textContent="교무수첩 백업 파일이 아니에요. '백업 파일 내보내기'로 받은 .json 파일을 골라 주세요.";return}
+    if(e.target.id==="impFile"){const f=e.target.files[0];if(!f)return;e.target.value="";f.text().then(async tx=>{let o;try{o=JSON.parse(tx);if(o&&o.kind==="add"){closeModal();await askAdd(o,f.name);return}if(!o.core||!o.core.settings)throw 0}catch(x){$("#impMsg").textContent="교무수첩 백업 파일이 아니에요. '백업 파일 내보내기'로 받은 .json 파일을 골라 주세요.";return}
       await loadAllJournals();showImportAsk(o,f.name)})}});
   m.addEventListener("submit",e=>{if(e.target.id==="vwForm"){e.preventDefault();const a=$("#vw-s").value;if(!a){toast("시작 날짜를 골라 주세요");return}const b=$("#vw-e").value;st.vacWork=st.vacWork||[];st.vacWork.push({id:uid(),start:a,end:b&&b>a?b:"",name:$("#vw-n").value.trim()});redraw();return}
     if(e.target.id==="offForm"){e.preventDefault();const a=$("#off-s").value;if(!a){toast("시작 날짜를 골라 주세요");return}const b=$("#off-e").value;st.offDays=st.offDays||[];st.offDays.push({id:uid(),start:a,end:b&&b>a?b:"",name:$("#off-n").value.trim()||"쉬는 날"});redraw();return}
@@ -3607,6 +3607,28 @@ async function pubSync(force){if(store.mode!=="db"||!window.FB||!FB.auth.current
   b.set(sh.doc("events"),{json:j});b.set(sh.doc("manifest"),{events:{v:now,count:out.length},updatedAt:now,updatedBy:FB.auth.currentUser.email||""},{merge:true});
   try{await b.commit();try{localStorage.setItem(key,JSON.stringify({j,imgs,at:now}))}catch(x){}setSave("공개 행사 "+out.length+"개를 사이트·검색 PC에 반영함 · "+new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}))}
   catch(x){toast(/permission/i.test(x.code||x.message||"")?"공개하지 못했어요: 관리자 계정으로 로그인해야 해요":"공개 행사를 사이트에 올리지 못했어요. 잠시 뒤 다시 해 볼게요");console.warn(x);clearTimeout(store.pubT);store.pubT=setTimeout(()=>pubSync().catch(()=>{}),60000)}}
+
+/* ===== 추가 넣기: 기존 내용은 그대로 두고, 파일에 든 것만 더하기(같은 id는 고치기) =====
+   파일 모양: {"app":"함박꽃북토리 교무수첩","kind":"add","title":"설명",
+     "events":[행사], "promos":[홍보물], "yearly":[], "yearMemos":[],
+     "info":{"entries":[], "docs":[]}, "calMemos":{"YYYY-MM-DD":[]}, "monthTodos":{"YYYY-MM":[]},
+     "tasks":{"YYYY-MM-DD":[{"id","text","cat"}]}, "assets":{"아이디":{"name","type","data":"data:..."}} }
+   파일 안에서 그림·첨부는 "/_blob/아이디"로 적고 assets에 넣으면 올리면서 바꿔 줌 */
+function addSummary(o){const n=[];const c=(k,l)=>{const v=o[k];const len=Array.isArray(v)?v.length:v&&typeof v==="object"?Object.values(v).reduce((a,x)=>a+(Array.isArray(x)?x.length:0),0):0;if(len)n.push(l+" "+len+"개")};
+  c("events","행사");c("promos","홍보물");c("yearly","연간 할 일");c("yearMemos","내년 메모");if(o.info){if((o.info.entries||[]).length)n.push("정보 "+o.info.entries.length+"개");if((o.info.docs||[]).length)n.push("공문 "+o.info.docs.length+"개")}c("calMemos","캘린더 메모");c("monthTodos","월 할 일");c("tasks","업무일지 할 일");return n.join(", ")||"넣을 내용 없음"}
+async function askAdd(o,fname){const sum=addSummary(o);if(!confirm(`${o.title?o.title+"\n\n":""}${sum}\n\n지금 수첩에 더할까요? 기존 내용은 그대로 두고, 같은 항목은 새 내용으로 고쳐요.`))return;await mergeAdd(o)}
+async function mergeAdd(o){
+  if(o.assets&&window.FBA){let txt=JSON.stringify(o);const ids=Object.keys(o.assets);let i=0;for(const id of ids){i++;setSave(`첨부 올리는 중… ${i}/${ids.length}`);const a=o.assets[id];const u=await FBA.putAsset(a.data,{name:a.name||"",type:a.type||""},id);txt=txt.split("/_blob/"+id).join(u)}o=JSON.parse(txt)}
+  let add=0,chg=0;const up=(arr,items,fix)=>{(items||[]).forEach(x0=>{let x=fix?fix(x0):x0;if(!x.id)x.id=uid();const i=arr.findIndex(y=>y.id===x.id);if(i>=0){arr[i]=Object.assign({},arr[i],x);chg++}else{arr.push(x);add++}})};
+  up(core.events,o.events,x=>{const b=newEvent(x.name||"",x.type||"day",x.start,x.end||x.start);const e=Object.assign(b,JSON.parse(JSON.stringify(x)));postOf(e);return e});
+  up(core.promos,o.promos);up(core.yearly,o.yearly);up(core.yearMemos,o.yearMemos);
+  if(o.info){up(core.info.entries,o.info.entries);up(DOCS(),o.info.docs)}
+  const upMap=(obj,src)=>Object.entries(src||{}).forEach(([k,list])=>{obj[k]=obj[k]||[];up(obj[k],list)});
+  upMap(core.calMemos,o.calMemos);upMap(core.monthTodos,o.monthTodos);
+  const months=new Set();for(const [ds,list] of Object.entries(o.tasks||{})){await loadJournal(ds.slice(0,7));const d=jday(ds);up(d.tasks,(list||[]).map(t=>Object.assign({status:""},t)));months.add(ds.slice(0,7))}
+  persist("core");months.forEach(m=>persist("j-"+m));render();toast(`더했어요: 새로 ${add}개, 고침 ${chg}개`)}
+document.addEventListener("change",async e=>{if(e.target.id!=="addFile")return;const f=e.target.files[0];e.target.value="";if(!f)return;let o;try{o=JSON.parse(await f.text())}catch(x){toast("파일을 읽지 못했어요");return}
+  if(o&&o.kind==="add"){await askAdd(o,f.name);return}if(o&&o.core){toast("전체 백업 파일이에요. 설정 → 백업에서 불러와 주세요");return}toast("추가 파일이 아니에요")});
 /* ===== 사이트판: 예전 기록 옮기기 ===== */
 async function importAssetsInto(o){if(!o||!o.assets||!window.FBA)return o;let txt=JSON.stringify({core:o.core,journals:o.journals});
   const ids=Object.keys(o.assets);let i=0;for(const id of ids){i++;setSave(`첨부 파일 옮기는 중… ${i}/${ids.length}`);const a=o.assets[id];const u=await FBA.putAsset(a.data,{name:a.name||"",type:a.type||""},id);txt=txt.split("/_blob/"+id).join(u)}
