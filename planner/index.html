@@ -1046,7 +1046,7 @@ function journalCard(ds,opts={}){
     <div class="daynav">
       <div class="row"><button class="circbtn" data-jnav="-1" type="button" aria-label="이전 근무일">‹</button>
       <h2>${dt.getMonth()+1}월 ${dt.getDate()}일 ${WD[dt.getDay()]}요일</h2>
-      <button class="circbtn" data-jnav="1" type="button" aria-label="다음 근무일">›</button></div>
+      <button class="circbtn" data-jnav="1" type="button" aria-label="다음 근무일">›</button>${ds!==todayS?`<button type="button" class="btn ghost sm" data-jtoday>오늘로</button>`:""}</div>
       ${dd?`<span class="dday-big">${dtxt(dd.n-Math.round((dt-TODAY)/864e5))}</span>`:""}
     </div>
     ${vac?`<div class="small faint" style="margin-top:4px">${offName(ds)?offName(ds)+" · ":""}${isVac(ds)?(isVacWork(ds)&&!offName(ds)?"방학 중 출근일":"방학 기간"):"쉬는 날"}이에요</div>`:""}
@@ -1146,7 +1146,8 @@ function bindJournal(root,after){
   root.addEventListener("click",async e=>{
     const card=e.target.closest(".jcard");if(!card)return;const ds=card.dataset.ds;
     const nav=e.target.closest("[data-jnav]");
-    if(nav){const n=+nav.dataset.jnav;const to=n>0?nextJ(ds):(prevJ(ds)||ymd(addD(P(ds),-1)));await loadJournal(to.slice(0,7));ui.jDate=to;ui.jMonth=to.slice(0,7);render();return}
+    if(nav){const n=+nav.dataset.jnav;const to=n>0?nextJ(ds):(prevJ(ds)||ymd(addD(P(ds),-1)));await loadJournal(to.slice(0,7));if(ui.tab==="home")ui.homeDate=to;else{ui.jDate=to;ui.jMonth=to.slice(0,7)}render();return}
+    if(e.target.closest("[data-jtoday]")){await loadJournal(todayS.slice(0,7));if(ui.tab==="home")ui.homeDate=null;else{ui.jDate=todayS;ui.jMonth=todayS.slice(0,7)}render();return}
     const cc=e.target.closest("[data-catcycle]");
     if(cc){const t=findTask(ds,cc.dataset.catcycle);const names=["",...core.settings.cats.map(c=>c.name)];t.cat=names[(names.indexOf(t.cat)+1)%names.length];persist("j-"+ds.slice(0,7));render();return}
     const st=e.target.closest("[data-stat]");
@@ -1259,7 +1260,7 @@ function vHome(){
   const ht=ui.homeTab==="more"?"more":"today";const nMore=DOCS().filter(docPending).length+(d?d.tasks.filter(t=>!t.status).length:0);
   v.innerHTML=`<div class="seg homeseg" role="group" aria-label="홈 화면 나누기"><button type="button" data-hometab="today" aria-pressed="${ht==="today"}">오늘</button><button type="button" data-hometab="more" aria-pressed="${ht==="more"}">챙길 것</button></div>
    <div class="grid-main" data-ht="${ht}">
-    <div class="stack">${journalCard(ds)}</div>
+    <div class="stack">${journalCard(ui.homeDate&&journals[ui.homeDate.slice(0,7)]?ui.homeDate:ds)}</div>
     <div class="stack">${xcHomeCard()}${upcomingCard(false)}${core.settings.tabs.info?docsCard():""}${core.settings.tabs.lesson?weekBookingsCard():""}
       ${dueBoard(todays,work)}
       ${monthTodoCard(ym(TODAY))}
