@@ -462,7 +462,7 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
     </div>
     <div class="today">
       <div class="datebox"><b id="tDate"></b><br><span class="small" id="tWeek"></span><br><span class="dday" id="tDday"></span></div>
-      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="gear" id="openUndo" type="button" aria-label="되돌리기 (Ctrl+Z)" title="되돌리기 (Ctrl+Z)" disabled style="opacity:.45">↶<span class="gl"> 되돌리기</span></button><button class="gear pconly" id="openMini" type="button" aria-label="작은 창으로 보기" title="작은 창으로 보기 (위젯처럼)">▣<span class="gl"> 작은 창</span></button><button class="gear" id="openSearch" type="button" aria-label="검색">🔍<span class="gl"> 검색</span></button><button class="gear" id="openSet" type="button" aria-label="설정">⚙<span class="gl"> 설정</span></button></span>
+      <span class="row" style="gap:6px;flex-wrap:nowrap"><button class="gear" id="openUndo" type="button" aria-label="되돌리기 (Ctrl+Z)" title="되돌리기 (Ctrl+Z)" disabled style="opacity:.45">↶<span class="gl"> 되돌리기</span></button><button class="gear pconly" id="openMini" type="button" aria-label="작은 창으로 보기" title="작은 창으로 보기 (위젯처럼)">▣<span class="gl"> 작은 창</span></button><button class="gear" id="openGpt" type="button" aria-label="GPT로 정리한 내용 넣기" title="GPT로 정리한 내용 넣기 (입력칸 밖에서 Ctrl+V 해도 돼요)">📥<span class="gl"> 붙여넣기</span></button><button class="gear" id="openSearch" type="button" aria-label="검색">🔍<span class="gl"> 검색</span></button><button class="gear" id="openSet" type="button" aria-label="설정">⚙<span class="gl"> 설정</span></button></span>
     </div>
   </header>
   <div id="note" class="notice" hidden></div>
@@ -571,18 +571,6 @@ const HOL={"2026-01-01": "신정", "2026-02-16": "설날 연휴", "2026-02-17": 
 const DEF_PERIODS={초:[["1교시","09:00","09:40"],["2교시","09:50","10:30"],["3교시","10:50","11:30"],["4교시","11:40","12:20"],["점심","12:20","13:10"],["5교시","13:10","13:50"],["6교시","14:00","14:40"]],
  중:[["1교시","08:50","09:35"],["2교시","09:45","10:30"],["3교시","10:40","11:25"],["4교시","11:35","12:20"],["점심","12:20","13:10"],["5교시","13:10","13:55"],["6교시","14:05","14:50"],["7교시","15:00","15:45"]],
  고:[["1교시","08:40","09:30"],["2교시","09:40","10:30"],["3교시","10:40","11:30"],["4교시","11:40","12:30"],["점심","12:30","13:20"],["5교시","13:20","14:10"],["6교시","14:20","15:10"],["7교시","15:20","16:10"]]};
-const DEF_EVTYPES_LEAD={"작가 섭외·일정 확정":30,"강사 범죄경력회보서 받기":10,"사전독서 책 구입":21,"학급별 단체 대출":14,"질문 태그":7,"필사 카드":7,"강사료 품의":7,"업체 섭외·계약":30,"장소 예약":14,"음향·장비 확인":2,"담임 안내":3,"사후 독서 연계":0,"지출 품의":7,"시안·샘플 만들기":7,"대출 조건 설정":2,"대상 도서 준비":5,"안내 방송·메시지":1,"참가 신청":21,"부스 준비물":5,"출장 처리":3,"결과 공유":0};
-function defEvTypes(){return[
- {id:"author",icon:"✍️",name:"작가와의 만남",prep:["작가 섭외·일정 확정","강사 범죄경력회보서 받기","사전독서 책 구입","학급별 단체 대출","질문 태그","필사 카드","포스터","포스터 부착","강사료 품의"]},
- {id:"show",icon:"🎭",name:"공연·초청 프로그램",prep:["업체 섭외·계약","장소 예약","음향·장비 확인","담임 안내","포스터","포스터 부착","사후 독서 연계","지출 품의"]},
- {id:"make",icon:"✂️",name:"도서관 체험·만들기",prep:["재료 구매","시안·샘플 만들기","활동지","프린트","포스터","포스터 부착","상품 구매"]},
- {id:"camp",icon:"🎁",name:"이벤트·캠페인",prep:["대출 조건 설정","대상 도서 준비","포스터","포스터 부착","상품 구매","안내 방송·메시지"]},
- {id:"out",icon:"🚌",name:"바깥 행사 참여",prep:["참가 신청","부스 준비물","출장 처리","결과 공유"]}]}
-/* 행사 종류에 들어 있는 준비 항목이 준비 목록에 없으면 채워 넣기 */
-function ensureTypePrep(st){(st.evTypes||[]).forEach(t=>t.prep.forEach(n=>{if(!st.prep.some(p=>p.name===n))st.prep.push({name:n,def:false,lead:DEF_EVTYPES_LEAD[n]!=null?DEF_EVTYPES_LEAD[n]:""})}))}
-function evTypeOf(e){return e&&e.kind?(core.settings.evTypes||[]).find(t=>t.id===e.kind)||null:null}
-function typeChip(e){const t=evTypeOf(e);return t?`<span class="chip" style="border:0;background:var(--accent-soft);color:var(--accent-deep)">${esc(t.icon||"")} ${esc(t.name)}</span>`:""}
-function typePrep(kind){const t=(core.settings.evTypes||[]).find(x=>x.id===kind);return t?t.prep.filter(n=>core.settings.prep.some(p=>p.name===n)):core.settings.prep.filter(p=>p.def).map(p=>p.name)}
 function freshCore(){return{
   v:1, setupDone:false,
   settings:{plannerName:"교무수첩",myName:"",schoolName:"운암초등학교",libName:"함박꽃북토리",level:"초",classes:[4,4,4,4,4,4],
@@ -590,7 +578,6 @@ function freshCore(){return{
     periods:DEF_PERIODS.초.map(p=>({name:p[0],start:p[1],end:p[2]})),
     prep:[{name:"포스터",def:true},{name:"활동지",def:false},{name:"프린트",def:false},{name:"재료 구매",def:false},{name:"상품 구매",def:false},{name:"포스터 부착",def:true}],
     programs:[{id:uid(),name:"빙고",prep:["포스터","프린트","포스터 부착"]}],
-    evTypes:defEvTypes(),
     cats:[{name:"행사",color:"#7fb0e8"},{name:"업무",color:"#f2cb5a"},{name:"수업",color:"#b79be8"},{name:"회의",color:"#c3bcc0"}],
     color:"pink",offDays:[],tabs:{lesson:true,shop:true,budget:true,school:true,info:true},prizeMode:"stock"},
   lessons:{tt:{},moves:{},plans:[],logs:{},noClass:{},calNotes:{},bookings:[],files:[],subjects:["독서"]},
@@ -728,7 +715,7 @@ async function flush(name){
     catch(e){saveFailed(name,/quota/i.test(e.name+e.message)?"브라우저 저장 공간이 가득 찼어요. 설정 → 백업에서 파일로 내려받아 두세요.":"이 브라우저에 저장하지 못했어요. 설정 → 백업에서 파일로 내려받아 두세요.",e)}
   }
 }
-function mergeCore(d){const f=freshCore();d=d||{};core=Object.assign(f,d);core.settings=Object.assign(f.settings,d.settings||{});core.settings.tabs=Object.assign({lesson:true,shop:true,budget:true,school:true,info:true},core.settings.tabs||{});core.lessons=Object.assign(freshCore().lessons,d.lessons||{});core.shop=Object.assign(freshCore().shop,d.shop||{});core.budget=Object.assign(freshCore().budget,d.budget||{});core.school=Object.assign(freshCore().school,d.school||{});core.info=Object.assign(freshCore().info,d.info||{});core.booklists=Object.assign(freshCore().booklists,d.booklists||{});core.info.rule=Object.assign(freshCore().info.rule,core.info.rule||{});if(!Array.isArray(core.settings.evTypes))core.settings.evTypes=defEvTypes();ensureTypePrep(core.settings)}
+function mergeCore(d){const f=freshCore();d=d||{};core=Object.assign(f,d);core.settings=Object.assign(f.settings,d.settings||{});core.settings.tabs=Object.assign({lesson:true,shop:true,budget:true,school:true,info:true},core.settings.tabs||{});core.lessons=Object.assign(freshCore().lessons,d.lessons||{});core.shop=Object.assign(freshCore().shop,d.shop||{});core.budget=Object.assign(freshCore().budget,d.budget||{});core.school=Object.assign(freshCore().school,d.school||{});core.info=Object.assign(freshCore().info,d.info||{});core.booklists=Object.assign(freshCore().booklists,d.booklists||{});core.info.rule=Object.assign(freshCore().info.rule,core.info.rule||{})}
 async function loadJournal(month){
   if(journals[month])return journals[month];
   journals[month]={days:{}};
@@ -1207,7 +1194,7 @@ function bindMonthTodos(root){
 }
 function upcomingCard(pick){
   const up=upcoming();const todo=up.filter(e=>evRemain(e).length),ready=up.filter(e=>!evRemain(e).length);
-  const line=e=>`<div class="evline" style="${evRemain(e).length&&evRange(e)[0]<=ymd(addD(TODAY,7))?"box-shadow:inset 3px 0 0 var(--accent)":""}"><div class="row" style="gap:6px">${evBadge(e)}<b>${evTypeOf(e)?esc(evTypeOf(e).icon||"")+" ":""}${esc(e.name)}</b> <span class="small faint">${evWhen(e)}</span></div>
+  const line=e=>`<div class="evline" style="${evRemain(e).length&&evRange(e)[0]<=ymd(addD(TODAY,7))?"box-shadow:inset 3px 0 0 var(--accent)":""}"><div class="row" style="gap:6px">${evBadge(e)}<b>${esc(e.name)}</b> <span class="small faint">${evWhen(e)}</span></div>
     <div class="chips">${!evRemain(e).length&&e.prep.length?`<span class="chip on">준비 끝 ✓</span>`:""}${evRemain(e).map(p=>pick?`<button type="button" class="chip todo" data-pick="${esc(e.name+" "+p)}" data-pcat="행사">${esc(p)} ＋</button>`:`<span class="chip todo">${esc(p)}</span>`).join("")}<span class="small faint">${e.prep.length?`준비 ${e.done.length}/${e.prep.length}`:""}</span></div></div>`;
   return `<section class="panel"><div class="phead"><h2><span class="dot"></span>준비중인 행사</h2><span class="small faint">진행 중 · 30일 안</span></div>
   <div class="list">${[...up].sort((a,b)=>evRange(a)[0].localeCompare(evRange(b)[0])).map(line).join("")||`<div class="empty">30일 안에 잡힌 행사가 없어요.</div>`}</div></section>`;
@@ -1346,8 +1333,7 @@ function openQuickAdd(ds){
   const body=()=>`<div class="seg" role="group">${[["ev","행사"],["memo","메모"],["promo","홍보물"],["off","쉬는 날"]].map(k=>`<button type="button" data-k="${k[0]}" aria-pressed="${kind===k[0]}">${k[1]}</button>`).join("")}</div>
    ${kind==="ev"?`<label class="f">행사명<input id="qa-name" autocomplete="off"></label>
      <label class="chk"><input type="radio" name="qa-t" value="week" checked><span class="t">주간 행사 · ${weekLabel(d)} (${md(ymd(mon))}~${md(ymd(fri))})</span></label>
-     <label class="chk"><input type="radio" name="qa-t" value="day"><span class="t">하루 행사 · ${md(ds)}</span></label>
-     <label class="f">행사 종류<select id="qa-kind">${(core.settings.evTypes||[]).map(t=>`<option value="${t.id}">${esc(t.icon||"")} ${esc(t.name)}</option>`).join("")}<option value="" selected>기타</option></select></label>`
+     <label class="chk"><input type="radio" name="qa-t" value="day"><span class="t">하루 행사 · ${md(ds)}</span></label>`
    :kind==="memo"?`<label class="f">메모<input id="qa-name" autocomplete="off" placeholder="이 날 적어 둘 것"></label>`
    :kind==="off"?`<label class="f">이름<input id="qa-name" autocomplete="off" placeholder="예: 재량휴업일, 개교기념일"></label><span class="small faint">${md(ds)}이 학교 쉬는 날로 들어가요. 여러 날은 ⚙ 설정 → 학사일정에서 넣어요.</span>`
    :`<label class="f">홍보물 이름<input id="qa-name" autocomplete="off" placeholder="예: 겨울방학 대출 안내"></label><span class="small faint">${md(ds)} 게시로 들어가요.</span>`}`;
@@ -1355,7 +1341,7 @@ function openQuickAdd(ds){
   const redraw=()=>{$(".mb",m).innerHTML=body();$(".mf",m).innerHTML=`${kind==="ev"?`<button class="linkbtn" data-more type="button">자세히 입력하기</button>`:""}<span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-ok type="button">추가</button>`;$("#qa-name").focus()};
   setTimeout(()=>{const q=$("#qa-name");q&&q.focus()},30);
   const make=()=>{const name=$("#qa-name").value.trim()||(kind==="off"?"쉬는 날":"");if(!name){$("#qa-name").focus();return null}
-    if(kind==="ev"){const t=$('input[name="qa-t"]:checked',m).value;const kd=$("#qa-kind",m);const e=newEvent(name,t,t==="day"?ds:ymd(mon),t==="day"?ds:ymd(fri),kd?kd.value:"");core.events.push(e);return e}
+    if(kind==="ev"){const t=$('input[name="qa-t"]:checked',m).value;const e=newEvent(name,t,t==="day"?ds:ymd(mon),t==="day"?ds:ymd(fri));core.events.push(e);return e}
     if(kind==="memo"){(core.calMemos[ds]=core.calMemos[ds]||[]).push({id:uid(),text:name});return true}
     if(kind==="off"){(core.settings.offDays=core.settings.offDays||[]).push({id:uid(),start:ds,end:"",name});return true}
     core.promos.push({id:uid(),name,date:ds,memo:"",yearly:false,done:false,poster:""});return true};
@@ -1373,7 +1359,7 @@ function openCalMemo(ds,id){const m0=(core.calMemos[ds]||[]).find(x=>x.id===id);
 function postOf(e){e.post=Object.assign({classes:"",students:"",improve:"",report:false,photos:false,settle:false},e.post||{});return e.post}
 function postLeft(e){const p=postOf(e);return["report","photos","settle"].filter(k=>!p[k]).length}
 function postFilled(e){const p=postOf(e);return !!(p.classes||p.students||p.improve||p.report||p.photos||p.settle)}
-function newEvent(name,type,start,end,kind){return{id:uid(),name,type,kind:kind||"",start,end:type==="day"?start:end,content:"",budget:"",prize:"",material:"",qty:"",prep:typePrep(kind||""),done:[],poster:"",result:""}}
+function newEvent(name,type,start,end){return{id:uid(),name,type,start,end:type==="day"?start:end,content:"",budget:"",prize:"",material:"",qty:"",prep:core.settings.prep.filter(p=>p.def).map(p=>p.name),done:[],poster:"",result:""}}
 function weeksOfMonth(y,m){const out=[];let d=monday(new Date(y,m-1,1));for(let i=0;i<7;i++){const th=addD(d,3);if(th.getMonth()===m-1)out.push({n:Math.ceil(th.getDate()/7),mon:ymd(d),fri:ymd(addD(d,4))});d=addD(d,7)}return out}
 function posterSlot(url,id){return `<div class="row" style="align-items:flex-start;gap:12px">
    ${url?`<div style="width:130px;position:relative"><img class="poster" src="${esc(url)}" alt="포스터" style="border-radius:10px"><button type="button" class="btn ghost sm" data-unposter style="position:absolute;top:6px;right:6px">빼기</button></div>`:""}
@@ -1391,7 +1377,6 @@ function openEvent(ev){
   const body=()=>{const mk=evMonth(e);const [y,mo]=mk.split("-").map(Number);const wks=weeksOfMonth(y,mo);
    const months=AY_MONTHS.map(m=>ayMonthDate(ayOf(P(e.start)),m));
    return `<label class="f">행사명<input id="e-name" value="${esc(e.name)}"></label>
-   <div><div class="small muted" style="margin-bottom:6px">행사 종류 <span class="faint">(고르면 그 종류에 맞는 준비 항목이 들어가요)</span></div><div class="chips">${(core.settings.evTypes||[]).map(t=>`<button type="button" class="chip ${e.kind===t.id?"on":""}" data-ek="${t.id}">${esc(t.icon||"")} ${esc(t.name)}</button>`).join("")}<button type="button" class="chip ${!e.kind?"on":""}" data-ek="">기타</button></div></div>
    <div class="seg" role="group"><button type="button" data-et="week" aria-pressed="${e.type!=="day"}">주간 행사</button><button type="button" data-et="day" aria-pressed="${e.type==="day"}">하루 행사</button></div>
    ${e.type==="day"?`<label class="f">날짜<input type="date" id="e-day" value="${e.start}"></label>`
     :`<div class="fgrid"><label class="f">월<select id="e-mon">${months.map(d=>`<option value="${ym(d)}" ${ym(d)===mk?"selected":""}>${d.getFullYear()}년 ${d.getMonth()+1}월</option>`).join("")}</select></label>
@@ -1401,8 +1386,7 @@ function openEvent(ev){
    <label class="f">행사 내용<textarea id="e-content">${esc(e.content)}</textarea></label>
    <div class="fgrid"><label class="f">예산(원)<input type="number" id="e-budget" value="${esc(e.budget)}" inputmode="numeric"></label><label class="f">상품<input id="e-prize" value="${esc(e.prize)}"></label>
    <label class="f">재료<input id="e-mat" value="${esc(e.material)}"></label><label class="f">수량<input id="e-qty" value="${esc(e.qty)}"></label></div>
-   <div><div class="small muted" style="margin-bottom:6px">이 행사에 필요한 준비 (눌러서 고르기)</div>${(()=>{const tp=e.kind?typePrep(e.kind):[];const ch=p=>`<button type="button" class="chip ${e.prep.includes(p.name)?"on":""}" data-pp="${esc(p.name)}">${esc(p.name)}</button>`;const a=core.settings.prep.filter(p=>tp.includes(p.name)),b=core.settings.prep.filter(p=>!tp.includes(p.name));
-     return tp.length?`<div class="chips">${a.map(ch).join("")}</div><details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">다른 준비 항목 ${b.length}개</summary><div class="chips" style="margin-top:6px">${b.map(ch).join("")}</div></details>`:`<div class="chips">${core.settings.prep.map(ch).join("")}</div>`})()}</div>
+   <div><div class="small muted" style="margin-bottom:6px">이 행사에 필요한 준비 (눌러서 고르기)</div><div class="chips">${core.settings.prep.map(p=>`<button type="button" class="chip ${e.prep.includes(p.name)?"on":""}" data-pp="${esc(p.name)}">${esc(p.name)}</button>`).join("")}</div></div>
    ${e.prep.length?`<div><div class="small muted" style="margin-bottom:6px">준비 체크</div><div class="row">${e.prep.map(p=>`<label class="chk ${e.done.includes(p)?"done":""}" style="padding:5px 10px"><input type="checkbox" data-pd="${esc(p)}" ${e.done.includes(p)?"checked":""}><span class="t">${esc(p)}</span></label>`).join("")}</div></div>`:""}
    <div class="memobox" style="gap:8px;border-color:${e.pub?"var(--accent)":"var(--line)"}"><label class="chk" style="background:transparent;padding:0"><input type="checkbox" id="e-pub" ${e.pub?"checked":""}><span class="t"><b>🌐 공개하기</b> <span class="small faint">활동 안내 사이트와 도서검색 PC 소식에 자동으로 보여요</span></span></label>
     ${e.pub?`<div class="fgrid"><label class="f">대상<input id="e-ptarget" value="${esc(e.pubTarget||"")}" placeholder="예: 3·4학년, 전교생"></label><label class="f">시간<input id="e-ptime" value="${esc(e.pubTime||"")}" placeholder="예: 점심시간, 2~3교시"></label><label class="f">장소<input id="e-pplace" value="${esc(e.pubPlace||"")}" placeholder="예: 도서관"></label></div>
@@ -1435,7 +1419,6 @@ function openEvent(ev){
       <div class="row" style="margin-top:6px"><button type="button" class="btn sm" data-repcopy>복사</button><button type="button" class="btn ghost sm" data-repdone>복사하고 '결과보고서 작성' 체크</button></div>`;return}
     if(x.target.closest("[data-repcopy],[data-repdone]")){const t=$("#e-reptxt",m);t.select();copyText(t.value,null);if(x.target.closest("[data-repdone]")){keep();e.post.report=true;const c=$('[data-post="report"]',m);if(c){c.checked=true;c.closest(".chk").classList.add("done")}}return}
     const et=x.target.closest("[data-et]");if(et){keep();e.type=et.dataset.et;if(e.type==="day")e.end=e.start;else{const mo=monday(P(e.start));e.start=ymd(mo);e.end=ymd(addD(mo,4))}redraw();return}
-    const ek=x.target.closest("[data-ek]");if(ek){keep();const k=ek.dataset.ek;const oldTp=typePrep(e.kind||"");const kept=e.prep.filter(z=>!oldTp.includes(z)||e.done.includes(z));e.kind=k;e.prep=[...new Set([...typePrep(k),...kept])];e.done=e.done.filter(z=>e.prep.includes(z));redraw();return}
     const pp=x.target.closest("[data-pp]");if(pp){keep();const n=pp.dataset.pp;e.prep=e.prep.includes(n)?e.prep.filter(z=>z!==n):[...e.prep,n];e.done=e.done.filter(z=>e.prep.includes(z));redraw();return}
     if(x.target.closest("[data-ok]")){keep();if(!e.name.trim()){toast("행사명을 적어 주세요");return}
       if(isNew)core.events.push(e);else Object.assign(ev,e);persist("core");closeModal();render()}
@@ -1464,7 +1447,7 @@ function vEvents(){
       ${prev.length?`<div class="lastyear"><b>작년 ${m}월 행사</b>${prev.map(e=>`<span class="row" style="gap:4px;flex-wrap:nowrap"><span>${esc(e.name)}</span><button class="btn sm" data-evagain="${e.id}" type="button">올해도</button></span>`).join("")}${prev.length>1?`<button class="linkbtn" data-evagainall="${pk}" type="button">모두 가져오기</button>`:""}</div>`:""}
       ${evs.length?`<div class="cards">${evs.map(e=>{const pr=e.prep.length?Math.round(e.done.length/e.prep.length*100):100;
         return `<button type="button" class="ecard" data-ev="${e.id}">${e.poster?`<img class="poster" src="${esc(e.poster)}" alt="">`:`<div class="ph"><span class="k">함박꽃북토리 행사</span><span class="n">${esc(e.name)}</span><span class="k num">${e.type==="day"?md(e.start):weekLabel(P(e.start))}</span></div>`}
-        <div class="meta"><b>${evTypeOf(e)?esc(evTypeOf(e).icon||"")+" ":""}${esc(e.name)}</b><span class="small faint">${evWhen(e)}${evTypeOf(e)?" · "+esc(evTypeOf(e).name):""}</span><div class="prog" title="준비 ${pr}%"><span style="width:${pr}%"></span></div>
+        <div class="meta"><b>${esc(e.name)}</b><span class="small faint">${evWhen(e)}</span><div class="prog" title="준비 ${pr}%"><span style="width:${pr}%"></span></div>
         <div class="chips">${evRange(e)[1]<todayS?(postLeft(e)?`<span class="chip" style="background:var(--warn-soft);color:var(--warn);border:0;font-weight:700">정리 남음 ${postLeft(e)}</span>`:`<span class="chip on">정리 끝</span>`):(evRemain(e).map(p=>`<span class="chip todo">${esc(p)}</span>`).join("")||`<span class="chip on">준비 끝</span>`)}${e.pub?`<span class="chip" style="background:var(--accent-soft);color:var(--accent-deep);border:0">🌐 공개</span>`:""}${e.post&&e.post.students?`<span class="chip num">${e.post.students}명</span>`:""}</div></div></button>`}).join("")}</div>`:""}</div>`}).join("");
   }else if(sub==="prog"){
     const progs=core.settings.programs;
@@ -1559,7 +1542,7 @@ function closeModal(){$("#modalRoot").innerHTML="";document.body.dataset.c=core.
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#modalRoot").innerHTML)closeModal()});
 
 /* ===== 설정 ===== */
-const SETS=[["me","나와 학교"],["sem","학사일정"],["per","교시 시간"],["tabs","탭 켜고 끄기"],["types","행사 종류"],["prep","행사 준비 목록"],["prog","월간 프로그램"],["cats","업무일지 분류"],["look","꾸미기·화면"],["alarm","알림"],["ics","캘린더 연동"],["backup","백업·인수인계"],["trash","휴지통"]];
+const SETS=[["me","나와 학교"],["sem","학사일정"],["per","교시 시간"],["tabs","탭 켜고 끄기"],["prep","행사 준비 목록"],["prog","월간 프로그램"],["cats","업무일지 분류"],["look","꾸미기·화면"],["alarm","알림"],["ics","캘린더 연동"],["backup","백업·인수인계"],["trash","휴지통"]];
 /* 행사 준비 목록이 바뀌었을 때 예전 행사에 반영할지 */
 function prepChanges(st){
   const orig=core.settings.prep;const evAll=core.events;const fut=evAll.filter(e=>evRange(e)[1]>=todayS);
@@ -1624,12 +1607,6 @@ function openSettings(sec,first){
     if(s==="prep")return `<h3>행사 준비 목록</h3><p class="small muted" style="margin:0">행사마다 '이 행사에 필요해요'에서 고르는 항목이에요. '새 행사에 기본'을 켜 두면 새 행사에 자동으로 들어가요. '○일 전'은 행사(월간 프로그램은 그 달 첫 근무일) 며칠 전 근무일에 업무일지 할 일로 올릴지예요. 0이면 올리지 않아요. 이미 지난 날짜면 오늘 일지에 올라가요.</p>
       <div class="list">${st.prep.map((p,i)=>`<div class="row"><input data-prn="${i}" value="${esc(p.name)}" style="flex:1"><label class="row small" style="gap:4px;flex-wrap:nowrap" title="업무일지에 며칠 전(근무일)에 넣을지. 0이면 넣지 않아요"><input type="number" min="0" max="30" data-prl="${i}" value="${p.lead!=null&&p.lead!==""?p.lead:defLead(p.name)}" style="width:58px;padding:5px 6px" aria-label="${esc(p.name)} 며칠 전">일 전</label><label class="chk" style="padding:5px 10px"><input type="checkbox" data-prd="${i}" ${p.def?"checked":""}><span class="t small">새 행사에 기본</span></label><button type="button" class="linkbtn" data-prdel="${i}">빼기</button></div>`).join("")}</div>
       <form class="addrow" data-add="prep"><input placeholder="새 준비 항목"><button class="btn ghost" type="submit">항목 추가</button></form>`;
-    if(s==="types")return `<h3>행사 종류</h3><p class="small muted" style="margin:0">행사를 만들 때 종류를 고르면 아래에서 켠 준비 항목이 자동으로 들어가요. 항목 이름·며칠 전 알림은 '행사 준비 목록'에서 바꿔요. 종류를 안 고르면(기타) '새 행사에 기본' 항목이 들어가요.</p>
-      <div class="list">${st.evTypes.map((t,i)=>`<div class="memobox"><div class="row"><input data-tyi="${i}" value="${esc(t.icon||"")}" style="width:52px;text-align:center" aria-label="아이콘"><input data-tyn="${i}" value="${esc(t.name)}" style="flex:1" aria-label="종류 이름"><span class="small faint">${core.events.filter(e=>e.kind===t.id).length}개 행사</span><button type="button" class="linkbtn" data-tydel="${i}">지우기</button></div>
-        <div class="chips">${[...st.prep.filter(x=>t.prep.includes(x.name)),...st.prep.filter(x=>!t.prep.includes(x.name))].map(x=>`<button type="button" class="chip ${t.prep.includes(x.name)?"on":""}" data-typ="${i}|${esc(x.name)}">${esc(x.name)}</button>`).join("")}</div></div>`).join("")}</div>
-      <form class="addrow" data-add="types"><input placeholder="새 종류 (예: 독서 골든벨)"><button class="btn ghost" type="submit">종류 추가</button></form>
-      <form class="addrow" data-add="prep"><input placeholder="새 준비 항목 (모든 종류에서 고를 수 있어요)"><button class="btn ghost" type="submit">준비 항목 추가</button></form>
-      <div><button type="button" class="btn line sm" data-tyreset>처음 5가지 종류로 되돌리기</button></div>`;
     if(s==="prog")return `<h3>월간 프로그램</h3><p class="small muted" style="margin:0">빙고·방문 챌린지처럼 매달 반복하는 프로그램이에요. 행사 탭 → 월간 프로그램에서 달마다 포스터·상품·준비를 체크해요.</p>
       <div class="list">${st.programs.map((p,i)=>`<div class="memobox"><div class="row"><input data-pgn="${i}" value="${esc(p.name)}" style="flex:1"><button type="button" class="linkbtn" data-pgdel="${i}">지우기</button></div>
         <div class="chips">${st.prep.map(x=>`<button type="button" class="chip ${p.prep.includes(x.name)?"on":""}" data-pgp="${i}|${esc(x.name)}">${esc(x.name)}</button>`).join("")}</div></div>`).join("")}</div>
@@ -1647,7 +1624,7 @@ function openSettings(sec,first){
       <label class="chk" style="align-items:center"><input type="checkbox" id="bkNoStu" ${ui.bkNoStu?"checked":""}><span class="t small">학생 이름·출결·누가기록은 빼고 내보내기 (다른 사람에게 파일을 줄 때)</span></label>
       <div class="row"><button type="button" class="btn" data-export>백업 파일 내보내기</button><label class="btn ghost" style="cursor:pointer">백업 불러오기<input type="file" accept=".json,application/json" id="impFile" hidden></label>
        <button type="button" class="linkbtn" data-undoimp>복원 전 상태로 되돌리기</button></div>
-      <div class="evline" style="margin-top:6px"><span class="small"><b>📥 추가 넣기</b> <span class="faint">Claude가 만들어 준 추가 파일(.json)을 넣어요. 지금 내용은 그대로 두고 파일에 든 것만 더해요. 같은 항목은 새 내용으로 고쳐요.</span></span><div class="row"><label class="btn sm" style="cursor:pointer">추가 파일 고르기<input type="file" id="addFile" accept=".json,application/json" hidden></label></div></div>
+      <div class="evline" style="margin-top:6px"><span class="small"><b>📥 추가 넣기</b> <span class="faint">Claude·GPT가 만들어 준 추가 내용(.json 파일이나 붙여넣기)을 넣어요. 지금 내용은 그대로 두고 파일에 든 것만 더해요. 같은 항목은 새 내용으로 고쳐요.</span></span><div class="row"><button type="button" class="btn sm" data-gptopen>GPT 답 붙여넣기</button><label class="btn ghost sm" style="cursor:pointer">추가 파일 고르기<input type="file" id="addFile" accept=".json,application/json" hidden></label></div></div>
       <div id="impMsg" class="small"></div>${handoverHTML()}`;
   };
   const footHTML=`<span class="small faint">${first?"나와 학교 → 학사일정 순서로 채워 보세요.":"저장을 눌러야 바뀌어요."}</span><span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-sok type="button">${first?"시작하기":"저장"}</button>`;
@@ -1661,10 +1638,8 @@ function openSettings(sec,first){
     if(d.sem)st.sem[ay][d.sem]=t.value;if(t.id==="s-ddl")st.dday.label=t.value;if(t.id==="s-ddd")st.dday.date=t.value;
     if(d.pn!=null)st.periods[+d.pn].name=t.value;if(d.ps!=null)st.periods[+d.ps].start=t.value;if(d.pe!=null)st.periods[+d.pe].end=t.value;
     if(d.prl!=null){st.prep[+d.prl].lead=t.value===""?"":Math.max(0,+t.value||0)}
-    if(d.prn!=null){const old=st.prep[+d.prn].name;st.prep[+d.prn].name=t.value;st.programs.forEach(p=>p.prep=p.prep.map(x=>x===old?t.value:x));st.evTypes.forEach(p=>p.prep=p.prep.map(x=>x===old?t.value:x))}
+    if(d.prn!=null){const old=st.prep[+d.prn].name;st.prep[+d.prn].name=t.value;st.programs.forEach(p=>p.prep=p.prep.map(x=>x===old?t.value:x))}
     if(d.pgn!=null)st.programs[+d.pgn].name=t.value;
-    if(d.tyn!=null)st.evTypes[+d.tyn].name=t.value;
-    if(d.tyi!=null)st.evTypes[+d.tyi].icon=t.value;
     if(d.cn!=null)st.cats[+d.cn].name=t.value;
     if(d.cc!=null){st.cats[+d.cc].color=t.value;t.parentElement.style.background=t.value}});
   m.addEventListener("change",e=>{if(e.target.id==="bkNoStu")ui.bkNoStu=e.target.checked;const d=e.target.dataset;if(d.prd!=null)st.prep[+d.prd].def=e.target.checked;if(d.tabOn)st.tabs[d.tabOn]=e.target.checked;
@@ -1673,7 +1648,7 @@ function openSettings(sec,first){
   m.addEventListener("submit",e=>{if(e.target.id==="vwForm"){e.preventDefault();const a=$("#vw-s").value;if(!a){toast("시작 날짜를 골라 주세요");return}const b=$("#vw-e").value;st.vacWork=st.vacWork||[];st.vacWork.push({id:uid(),start:a,end:b&&b>a?b:"",name:$("#vw-n").value.trim()});redraw();return}
     if(e.target.id==="offForm"){e.preventDefault();const a=$("#off-s").value;if(!a){toast("시작 날짜를 골라 주세요");return}const b=$("#off-e").value;st.offDays=st.offDays||[];st.offDays.push({id:uid(),start:a,end:b&&b>a?b:"",name:$("#off-n").value.trim()||"쉬는 날"});redraw();return}
     const f=e.target.closest("[data-add]");if(!f)return;e.preventDefault();const v=$("input",f).value.trim();if(!v)return;
-    ({per:()=>st.periods.push({name:v,start:"15:00",end:"15:40"}),prep:()=>st.prep.push({name:v,def:false}),prog:()=>st.programs.push({id:uid(),name:v,prep:st.prep.filter(p=>p.def).map(p=>p.name)}),types:()=>st.evTypes.push({id:uid(),icon:"📌",name:v,prep:st.prep.filter(p=>p.def).map(p=>p.name)}),cats:()=>st.cats.push({name:v,color:"#9fc7a8"})})[f.dataset.add]();redraw()});
+    ({per:()=>st.periods.push({name:v,start:"15:00",end:"15:40"}),prep:()=>st.prep.push({name:v,def:false}),prog:()=>st.programs.push({id:uid(),name:v,prep:st.prep.filter(p=>p.def).map(p=>p.name)}),cats:()=>st.cats.push({name:v,color:"#9fc7a8"})})[f.dataset.add]();redraw()});
   m.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
     if(d.sec){ui.setSec=d.sec;redraw();return}
     if(d.lv){st.level=d.lv;redraw()}
@@ -1685,10 +1660,7 @@ function openSettings(sec,first){
     if(d.dd){st.dday.mode=d.dd;redraw()}
     if(d.defper!=null){st.periods=DEF_PERIODS[st.level].map(p=>({name:p[0],start:p[1],end:p[2]}));redraw()}
     if(d.pdel!=null){st.periods.splice(+d.pdel,1);redraw()}
-    if(d.prdel!=null){const n=st.prep[+d.prdel].name;st.prep.splice(+d.prdel,1);st.programs.forEach(p=>p.prep=p.prep.filter(x=>x!==n));st.evTypes.forEach(p=>p.prep=p.prep.filter(x=>x!==n));redraw()}
-    if(d.typ){const[i,n]=d.typ.split("|");const p=st.evTypes[+i];p.prep=p.prep.includes(n)?p.prep.filter(x=>x!==n):[...p.prep,n];redraw()}
-    if(d.tydel!=null){if(b.dataset.sure){st.evTypes.splice(+d.tydel,1);redraw()}else{b.dataset.sure=1;b.textContent="한 번 더 누르면 지워요 (행사는 '기타'가 돼요)"}}
-    if(d.tyreset!=null){if(b.dataset.sure){st.evTypes=defEvTypes();ensureTypePrep(st);st.prep.forEach(p=>{if(p._o==null)p._o=p.name});redraw()}else{b.dataset.sure=1;b.textContent="한 번 더 누르면 되돌려요"}}
+    if(d.prdel!=null){const n=st.prep[+d.prdel].name;st.prep.splice(+d.prdel,1);st.programs.forEach(p=>p.prep=p.prep.filter(x=>x!==n));redraw()}
     if(d.pgdel!=null){if(b.dataset.sure){st.programs.splice(+d.pgdel,1);redraw()}else{b.dataset.sure=1;b.textContent="한 번 더 누르면 지워요"}}
     if(d.pgp){const[i,n]=d.pgp.split("|");const p=st.programs[+i];p.prep=p.prep.includes(n)?p.prep.filter(x=>x!==n):[...p.prep,n];redraw()}
     if(d.cup!=null){const i=+d.cup;[st.cats[i-1],st.cats[i]]=[st.cats[i],st.cats[i-1]];redraw()}
@@ -3619,6 +3591,101 @@ document.addEventListener("change",async e=>{const t=e.target,d=t.dataset;
 });
 function xcAutoRefresh(){if(!core.xcal||!XC().auto||store.mode!=="db")return;const old=XC().src.filter(s=>s.kind==="google"&&(!s.at||Date.now()-s.at>30*60000));if(old.length)gRefresh(old.map(s=>s.id)).catch(()=>{})}
 
+/* ===== GPT로 정리해서 넣기 =====
+   GPT(맞춤형 GPT)에 공문·메신저를 붙여넣으면 '추가 넣기' JSON을 만들어 주고, 그걸 여기 붙여넣으면 미리 보고 넣는다.
+   ① GPT 지침 복사(처음 한 번) ② 교무수첩 정보 복사(GPT가 날짜·교시·기존 행사 id를 알게) ③ GPT 답 붙여넣기 → 미리 보기 → 넣기 */
+const GPT_GUIDE=`너는 초등학교 사서교사가 쓰는 '함박꽃북토리 교무수첩'의 입력 도우미야. 사용자가 공문, 메신저, 메일, 메모를 붙여넣으면 교무수첩에 넣을 항목으로 정리해.
+
+# 답하는 방식
+1. 먼저 짧은 요약: 어디에 무엇을 넣는지 목록으로 (날짜는 "11/20(금)"처럼). 애매한 건 "확인 필요:"로 따로 적어.
+2. 그다음 \`\`\`json 코드 블록 딱 하나에 '추가 넣기' JSON. 사용자는 이 블록만 복사해서 교무수첩에 붙여넣어.
+3. 넣을 게 없으면 JSON 없이 이유만 말해.
+4. 고쳐 달라고 하면 바뀐 부분만이 아니라 JSON 전체를 다시 줘. 같은 항목은 id를 그대로 유지해.
+
+# 날짜
+- 사용자가 붙여넣은 [교무수첩 정보]의 '오늘'을 기준으로 해. 없으면 대화 날짜 기준으로 하고 요약에 "기준일: …"을 적어.
+- "다음 주 화요일", "금요일까지" 같은 말은 실제 날짜 YYYY-MM-DD로 바꿔. 연도가 없으면 오늘 이후 가장 가까운 날짜.
+- 시간은 24시간 "HH:MM". 교시만 있으면 [교무수첩 정보]의 교시 시간을 써.
+
+# 어디에 넣을지
+- tasks (업무일지 할 일): 내가 해야 하는 일. 마감이 있으면 마감일에 넣고 text 끝에 "(마감 11/26)"을 붙여. 준비가 필요하면 하루 이틀 전에 준비 할 일을 하나 더 넣어도 돼. 시간이 정해진 일은 time·end.
+- info.docs (공문·지침 보관함): 공문·지침·안내문을 받으면 항상 하나 만들어. 제출·회신 기한은 due.
+- events (도서관 행사): 작가와의 만남, 공연·초청, 체험·만들기, 이벤트·캠페인, 바깥 행사 참여 같은 도서관 행사.
+- bookings (도서관 이용 예약): 어떤 학급이 도서관을 쓰거나 협력수업을 하기로 한 것.
+- calMemos (캘린더 메모): 내가 할 일은 아니지만 알아둘 학교 일정 (회의, 연수, 출장, 학교 행사, 담임 부재 등).
+- info.entries (기본 정보): 계정, 사이트 주소, 연락처, 기관 코드처럼 두고두고 찾아볼 정보. 비밀번호·코드는 "secret":true.
+- monthTodos (이달 할 일): 날짜는 없고 그 달 안에만 하면 되는 일.
+
+# JSON 모양 (필요 없는 칸은 빼)
+{"app":"함박꽃북토리 교무수첩","kind":"add","title":"한 줄 설명",
+ "tasks":{"YYYY-MM-DD":[{"id":"t…","text":"할 일","cat":"업무","time":"14:00","end":"15:00"}]},
+ "info":{"docs":[{"id":"d…","title":"공문 제목","date":"받은 날 YYYY-MM-DD","from":"보낸 곳","no":"문서번호","cat":"분류","due":"YYYY-MM-DD","memo":"핵심만 요약"}],
+         "entries":[{"id":"i…","group":"계정","label":"항목 이름","value":"내용","secret":false}]},
+ "events":[{"id":"ev…","name":"행사 이름","type":"day","kind":"author","start":"YYYY-MM-DD","end":"YYYY-MM-DD","content":"메모","prepAdd":["준비 항목"]}],
+ "bookings":[{"id":"bk…","date":"YYYY-MM-DD","period":"3교시","cls":"5-1","subject":"국어","teacher":"선생님","topic":"주제","coop":false,"memo":""}],
+ "calMemos":{"YYYY-MM-DD":[{"id":"m…","text":"메모"}]},
+ "monthTodos":{"YYYY-MM":[{"id":"mt…","text":"할 일"}]}}
+
+# 칸 규칙
+- id: 새 항목은 영어 소문자+숫자로 짧고 겹치지 않게 (예: t26112001, d26111301). [교무수첩 정보]에 있는 기존 행사·공문을 고치는 거면 그 id를 그대로 써. 그러면 적은 칸만 바뀌고 나머지는 그대로야.
+- tasks.cat: [교무수첩 정보]의 할 일 분류 중 하나 (없으면 행사·업무·수업·회의 중).
+- info.docs.cat: 자료 수집·폐기 / 예산 / 독서교육 / 행사·공모 / 연수 / 통계·조사 / 시설·안전 / 인사·복무 / 기타.
+- info.docs.memo: 원문을 통째로 붙이지 말고 대상, 기간, 방법, 제출처, 준비물, 링크, 연락처 같은 핵심만 줄바꿈(\\n)으로.
+- events.type: 하루면 "day", 며칠~한 주 기간이면 "week"(start~end). kind: author(작가와의 만남) / show(공연·초청) / make(체험·만들기) / camp(이벤트·캠페인) / out(바깥 행사 참여) / ""(기타). 기존 행사에 준비할 것을 더할 땐 prepAdd.
+- bookings.period: [교무수첩 정보]의 교시 이름 그대로 ("3교시"). cls는 "5-1" 모양. 협력수업이면 coop:true.
+- 같은 내용을 여러 곳에 겹쳐 넣지 마. (예: 행사로 넣었으면 같은 날 캘린더 메모는 빼)
+
+# 개인정보
+- 학생 이름, 학생 연락처 같은 개인정보는 JSON에 넣지 말고 요약에 "개인정보는 뺐어요"라고 알려.`;
+
+function gptContext(){const ay=ayOf(TODAY);const st=core.settings;const lines=[];
+  lines.push(`[교무수첩 정보]`,`오늘: ${todayS}(${WD[TODAY.getDay()]}) · ${ay}학년도 · ${st.schoolName||""} ${st.libName||""}`.trim());
+  const per=classPeriods();if(per.length)lines.push(`교시: ${per.map(p=>`${p.name} ${p.start}-${p.end}`).join(", ")}`);
+  try{const cl=allClasses();if(cl.length)lines.push(`학급: ${cl.join(", ")}`)}catch(e){}
+  lines.push(`할 일 분류: ${(st.cats||[]).map(c=>c.name).join(", ")}`);
+  const cut=ymd(addD(TODAY,-14));const evs=core.events.filter(e=>evRange(e)[1]>=cut).sort((a,b)=>a.start<b.start?-1:1).slice(0,40);
+  if(evs.length){lines.push(`행사 (id | 이름 | 날짜 | 종류):`);evs.forEach(e=>{const[s,en]=evRange(e);lines.push(`- ${e.id} | ${e.name} | ${s}${en!==s?"~"+en:""} | ${e.kind||""}`)})}
+  const docs=DOCS().filter(x=>!x.done&&(x.due||"")>=cut||(x.date||"")>=ymd(addD(TODAY,-30))).sort((a,b)=>(b.date||"").localeCompare(a.date||"")).slice(0,30);
+  if(docs.length){lines.push(`공문 (id | 제목 | 마감):`);docs.forEach(x=>lines.push(`- ${x.id} | ${x.title} | ${x.due||""}${x.done?" (완료)":""}`))}
+  lines.push(`[/교무수첩 정보]`,``,`아래 내용을 교무수첩에 넣게 정리해 줘:`,``);
+  return lines.join("\n")}
+function gptExtract(t){t=String(t||"").trim();if(!t)return{err:"붙여넣은 내용이 없어요"};
+  const fence=/```(?:json)?\s*([\s\S]*?)```/i.exec(t);let s=fence?fence[1]:t;const a=s.indexOf("{"),b=s.lastIndexOf("}");if(a<0||b<a)return{err:"JSON을 찾지 못했어요. GPT 답에서 ```json 블록을 복사해 주세요"};s=s.slice(a,b+1);
+  let o;try{o=JSON.parse(s)}catch(e){try{o=JSON.parse(s.replace(/,\s*([}\]])/g,"$1").replace(/[“”]/g,'"'))}catch(e2){return{err:"JSON 모양이 깨져 있어요. GPT에게 \"JSON을 다시 줘\"라고 해 주세요"}}}
+  if(!o||typeof o!=="object")return{err:"넣을 수 있는 모양이 아니에요"};if(o.core)return{err:"전체 백업 파일이에요. 설정 → 백업에서 불러와 주세요"};
+  if(!o.kind&&["tasks","events","info","bookings","calMemos","monthTodos","promos","yearly"].some(k=>o[k]))o.kind="add";if(o.kind!=="add")return{err:"교무수첩 추가 넣기 모양이 아니에요"};return{o}}
+function gptPreview(o){const out=[];const has=(arr,id)=>id&&(arr||[]).some(x=>x.id===id);const tag=f=>f?` <span class="chip" style="border:0">고침</span>`:"";
+  Object.entries(o.tasks||{}).forEach(([ds,l])=>(l||[]).forEach(t=>out.push(`📝 <b>할 일</b> ${md(ds)}${t.time?" "+esc(t.time)+(t.end?"–"+esc(t.end):""):""} · ${esc(t.text||"")}${t.cat?` <span class="faint">${esc(t.cat)}</span>`:""}`)));
+  ((o.info||{}).docs||[]).forEach(x=>out.push(`📄 <b>공문</b> ${esc(x.title||"")}${x.due?` · 마감 ${md(x.due)}`:""}${x.from?` <span class="faint">${esc(x.from)}</span>`:""}${tag(has(DOCS(),x.id))}`));
+  (o.events||[]).forEach(e=>out.push(`🎉 <b>행사</b> ${esc(e.name||"(기존 행사)")}${e.start?` · ${md(e.start)}${e.end&&e.end!==e.start?"~"+md(e.end):""}`:""}${e.prepAdd?` · 준비 +${e.prepAdd.length}`:""}${tag(has(core.events,e.id))}`));
+  (o.bookings||[]).forEach(b=>out.push(`📚 <b>도서관 이용</b> ${b.date?md(b.date):""} ${esc(b.period||"")} ${esc(b.cls||"")}${b.subject?" "+esc(b.subject):""}${b.coop?" (협력)":""}${tag(has(L().bookings,b.id))}`));
+  Object.entries(o.calMemos||{}).forEach(([ds,l])=>(l||[]).forEach(m=>out.push(`🗓 <b>캘린더 메모</b> ${md(ds)} · ${esc(m.text||"")}`)));
+  Object.entries(o.monthTodos||{}).forEach(([mk,l])=>(l||[]).forEach(m=>out.push(`📌 <b>${+mk.slice(5)}월 할 일</b> ${esc(m.text||"")}`)));
+  ((o.info||{}).entries||[]).forEach(x=>out.push(`🔖 <b>기본 정보</b> ${esc(x.group||"")} · ${esc(x.label||"")}${x.secret?" (가림)":""}${tag(has(core.info.entries,x.id))}`));
+  (o.promos||[]).forEach(p=>out.push(`🖼 <b>홍보물</b> ${esc(p.name||"")}`));(o.yearly||[]).forEach(p=>out.push(`📆 <b>연간 할 일</b> ${esc(p.text||p.name||"")}`));(o.yearMemos||[]).forEach(p=>out.push(`💭 <b>내년 메모</b> ${esc(p.text||"")}`));
+  return out}
+function openGptPaste(pre){
+  let o=null;
+  const m=modal("📥 GPT로 정리한 내용 넣기",`<div class="stack" style="gap:10px">
+    <div class="evline"><span class="small"><b>① 처음 한 번:</b> ChatGPT에서 '맞춤형 GPT 만들기' → 구성 → <b>지침</b> 칸에 붙여넣기 (또는 GPT 프로젝트의 지침 칸).</span><div class="row"><button type="button" class="btn ghost sm" data-gptguide>GPT 지침 복사</button></div></div>
+    <div class="evline"><span class="small"><b>② 정리 부탁할 때:</b> 이걸 먼저 복사해 GPT 입력창에 붙이고, 그 아래에 공문·메신저 내용을 붙여넣어요. 오늘 날짜·교시·기존 행사가 들어 있어서 날짜를 정확히 잡고 기존 행사를 고칠 수 있어요.</span><div class="row"><button type="button" class="btn ghost sm" data-gptctx>교무수첩 정보 복사</button></div></div>
+    <label class="f"><span class="small"><b>③ GPT 답 붙여넣기</b> <span class="faint">답 전체를 붙여도 되고 \`\`\`json 블록만 붙여도 돼요</span></span><textarea id="gptIn" style="min-height:150px;font-size:12px;font-family:ui-monospace,Consolas,monospace" placeholder='{"app":"함박꽃북토리 교무수첩","kind":"add", …}'>${esc(pre||"")}</textarea></label>
+    <div id="gptPv"></div></div>`,
+   `<span class="small faint">넣은 뒤에도 Ctrl+Z로 되돌릴 수 있어요.</span><span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-gptok type="button" disabled>넣기</button>`);
+  const show=()=>{const r=gptExtract($("#gptIn",m).value);const pv=$("#gptPv",m);const ok=$("[data-gptok]",m);
+    if(r.err){o=null;ok.disabled=true;pv.innerHTML=$("#gptIn",m).value.trim()?`<div class="small" style="color:var(--danger)">${esc(r.err)}</div>`:"";return}
+    o=r.o;const L0=gptPreview(o);ok.disabled=!L0.length;
+    pv.innerHTML=`<div class="sec-label" style="margin:0 0 4px">미리 보기${o.title?` · ${esc(o.title)}`:""} <span class="faint">${L0.length}개</span></div>${L0.length?`<div class="list small" style="max-height:260px;overflow:auto">${L0.map(x=>`<div class="pick" style="cursor:default;display:block">${x}</div>`).join("")}</div>`:`<div class="empty">넣을 항목이 없어요</div>`}`};
+  $("#gptIn",m).addEventListener("input",show);if(pre)show();else setTimeout(()=>$("#gptIn",m).focus(),50);
+  m.addEventListener("click",async e=>{
+    if(e.target.closest("[data-gptguide]")){copyText(GPT_GUIDE,null);return}
+    if(e.target.closest("[data-gptctx]")){copyText(gptContext(),null);return}
+    if(e.target.closest("[data-gptok]")&&o){const b=e.target.closest("[data-gptok]");b.disabled=true;closeModal();await mergeAdd(o)}})}
+/* 입력칸 밖에서 Ctrl+V로 추가 넣기 JSON을 붙여넣으면 바로 미리 보기 */
+document.addEventListener("paste",e=>{const t=e.target;if(t&&t.closest&&t.closest("input,textarea,select,[contenteditable]"))return;if($("#modalRoot").innerHTML)return;
+  const tx=(e.clipboardData||window.clipboardData).getData("text");if(!tx||!/"kind"\s*:\s*"add"/.test(tx))return;e.preventDefault();openGptPaste(tx)});
+document.addEventListener("click",e=>{if(e.target.closest("#openGpt,[data-gptopen]")){closeModal();openGptPaste()}});
+
 /* 시작 */
 
 /* ===== 공개 행사 → 공용 정보(shared/events) : 활동 안내 사이트·도서검색 PC가 읽음 ===== */
@@ -3643,7 +3710,7 @@ async function pubSync(force){if(store.mode!=="db"||!window.FB||!FB.auth.current
      "tasks":{"YYYY-MM-DD":[{"id","text","cat"}]}, "assets":{"아이디":{"name","type","data":"data:..."}} }
    파일 안에서 그림·첨부는 "/_blob/아이디"로 적고 assets에 넣으면 올리면서 바꿔 줌 */
 function addSummary(o){const n=[];const c=(k,l)=>{const v=o[k];const len=Array.isArray(v)?v.length:v&&typeof v==="object"?Object.values(v).reduce((a,x)=>a+(Array.isArray(x)?x.length:0),0):0;if(len)n.push(l+" "+len+"개")};
-  c("events","행사");c("prepItems","준비 항목");c("promos","홍보물");c("yearly","연간 할 일");c("yearMemos","내년 메모");if(o.info){if((o.info.entries||[]).length)n.push("정보 "+o.info.entries.length+"개");if((o.info.docs||[]).length)n.push("공문 "+o.info.docs.length+"개")}c("calMemos","캘린더 메모");c("monthTodos","월 할 일");c("tasks","업무일지 할 일");return n.join(", ")||"넣을 내용 없음"}
+  c("events","행사");c("prepItems","준비 항목");c("promos","홍보물");c("yearly","연간 할 일");c("yearMemos","내년 메모");if(o.info){if((o.info.entries||[]).length)n.push("정보 "+o.info.entries.length+"개");if((o.info.docs||[]).length)n.push("공문 "+o.info.docs.length+"개")}c("calMemos","캘린더 메모");c("monthTodos","월 할 일");c("tasks","업무일지 할 일");c("bookings","도서관 이용");return n.join(", ")||"넣을 내용 없음"}
 async function askAdd(o,fname){const sum=addSummary(o);if(!confirm(`${o.title?o.title+"\n\n":""}${sum}\n\n지금 수첩에 더할까요? 기존 내용은 그대로 두고, 같은 항목은 새 내용으로 고쳐요.`))return;closeModal();await mergeAdd(o)}
 async function mergeAdd(o){
   if(o.assets&&window.FBA){let txt=JSON.stringify(o);const ids=Object.keys(o.assets);let i=0;for(const id of ids){i++;setSave(`첨부 올리는 중… ${i}/${ids.length}`);const a=o.assets[id];const u=await FBA.putAsset(a.data,{name:a.name||"",type:a.type||""},id);txt=txt.split("/_blob/"+id).join(u)}o=JSON.parse(txt)}
@@ -3654,7 +3721,8 @@ async function mergeAdd(o){
   if(o.info){up(core.info.entries,o.info.entries);up(DOCS(),o.info.docs)}
   const upMap=(obj,src)=>Object.entries(src||{}).forEach(([k,list])=>{obj[k]=obj[k]||[];up(obj[k],list)});
   upMap(core.calMemos,o.calMemos);upMap(core.monthTodos,o.monthTodos);
-  const months=new Set();for(const [ds,list] of Object.entries(o.tasks||{})){await loadJournal(ds.slice(0,7));const d=jday(ds);up(d.tasks,(list||[]).map(t=>Object.assign({status:""},t)));months.add(ds.slice(0,7))}
+  up(L().bookings,o.bookings,x=>{if(!x.date||!x.period)return null;return Object.assign({cls:"",subject:"",teacher:"",topic:"",books:"",coop:false,repeat:false,until:"",memo:""},x)});
+  const months=new Set();for(const [ds,list] of Object.entries(o.tasks||{})){await loadJournal(ds.slice(0,7));const d=jday(ds);up(d.tasks,(list||[]).map(t0=>{const t=Object.assign({status:""},t0);if(t.time&&/^\d{1,2}:\d{2}$/.test(t.time)){const a=toMin(t.time),b=t.end&&/^\d{1,2}:\d{2}$/.test(t.end)?toMin(t.end):a+30;t.block={s:a,e:b>a?b:a+30}}delete t.time;delete t.end;return t}));months.add(ds.slice(0,7))}
   persist("core");months.forEach(m=>persist("j-"+m));render();toast(`더했어요: 새로 ${add}개, 고침 ${chg}개`)}
 document.addEventListener("change",async e=>{if(e.target.id!=="addFile")return;const f=e.target.files[0];e.target.value="";if(!f)return;let o;try{o=JSON.parse(await f.text())}catch(x){toast("파일을 읽지 못했어요");return}
   if(o&&o.kind==="add"){await askAdd(o,f.name);return}if(o&&o.core){toast("전체 백업 파일이에요. 설정 → 백업에서 불러와 주세요");return}toast("추가 파일이 아니에요")});
