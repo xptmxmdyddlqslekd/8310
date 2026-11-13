@@ -156,6 +156,9 @@ button.chip{cursor:pointer}
 .task.s-cancel .t{text-decoration:line-through;color:var(--fg3);opacity:.6}
 .task.s-defer .t{color:var(--fg3)}
 .task .when{font-size:11px;color:var(--fg3)}
+.etrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.etrow select,.etrow input[type=date]{width:auto;flex:none;min-width:0}
+.tt .evblk{cursor:pointer;background:color-mix(in srgb,var(--accent) 22%,var(--paper));border-color:var(--accent);color:var(--fg)}
 .evopen{cursor:pointer;transition:background .15s}
 .evopen:hover{background:color-mix(in srgb,var(--accent-soft) 45%,var(--sunk))}
 .evopen:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1095,14 +1098,38 @@ function timetable(ds,tasks){
     const place=my?`<b style="color:var(--lesson)">수업</b>`:bk.length?`<b style="color:var(--warn)">도서관</b>`:"";
     const what=my?myL+(bkL?` <span class="faint">·</span> <b style="color:var(--warn)">도서관</b> ${bkL}`:""):bkL;
     s+=`<div class="bg" style="top:${(a-TT_START)*PPM}px;height:${(b-a)*PPM}px;${my||bk.length?"":"opacity:.5"};${my?"background:color-mix(in srgb,var(--lesson-soft) 70%,transparent)":bk.length?"background:color-mix(in srgb,var(--warn-soft) 80%,transparent)":""}"><span class="pn">${esc(p.name)}</span><span class="pt num">${hh(toMin(p.start))}–${hh(toMin(p.end))}</span><span class="pl">${place}</span><span class="pc">${what}</span></div>`});
-  const bl=tasks.filter(t=>t.block).sort((x,y)=>x.block.s-y.block.s);const lane={},ends=[];let grp=[],grpEnd=-1;const flush=()=>{const n=Math.max(...grp.map(t=>lane[t.id]))+1;grp.forEach(t=>t._n=n);grp=[]};
+  const evb=evSlotsOn(ds).map(x=>({id:"ev_"+x.ev.id+"_"+x.i,block:{s:Math.max(x.s,TT_START),e:Math.min(x.e,TT_END)},_ev:x})).filter(x=>x.block.e>x.block.s);
+  const bl=[...tasks.filter(t=>t.block),...evb].sort((x,y)=>x.block.s-y.block.s);const lane={},ends=[];let grp=[],grpEnd=-1;const flush=()=>{const n=Math.max(...grp.map(t=>lane[t.id]))+1;grp.forEach(t=>t._n=n);grp=[]};
   bl.forEach(t=>{if(t.block.s>=grpEnd&&grp.length){flush();ends.length=0}let L=ends.findIndex(e=>e<=t.block.s);if(L<0)L=ends.length;ends[L]=t.block.e;lane[t.id]=L;grp.push(t);grpEnd=Math.max(grpEnd,t.block.e)});if(grp.length)flush();
   bl.forEach(t=>{const c=t.cat?catColor(t.cat):"#c3bcc0";const n=t._n||1,L=lane[t.id]||0;delete t._n;
+    if(t._ev){const x=t._ev;s+=`<div class="blk evblk ${n>1?"narrow":""}" data-evblk="${x.ev.id}" title="${esc(x.ev.name)}${x.auto?" (공개 시간에서 읽음)":""} · 눌러서 열기" style="left:calc(44px + (100% - 52px) * ${L}/${n});right:auto;width:calc((100% - 52px) / ${n} - 2px);top:${(t.block.s-TT_START)*PPM}px;height:${Math.max(18,(t.block.e-t.block.s)*PPM)}px;${x.auto?"border-style:dashed":""}">
+      <span class="nm">🎉 ${esc(x.ev.name)}${x.note?` <span style="font-weight:400;opacity:.8">${esc(x.note)}</span>`:""}</span><span class="tm num">${hh(x.s)}–${hh(x.e)}</span></div>`;return}
     s+=`<div class="blk ${n>1?"narrow":""}" data-blk="${t.id}" style="left:calc(44px + (100% - 52px) * ${L}/${n});right:auto;width:calc((100% - 52px) / ${n} - 2px);top:${(t.block.s-TT_START)*PPM}px;height:${Math.max(18,(t.block.e-t.block.s)*PPM)}px;background:color-mix(in srgb,${c} 30%,var(--paper));border-color:color-mix(in srgb,${c} 70%,var(--paper))">
       <span class="nm">${esc(t.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap"><span class="tm num">${hh(t.block.s)}–${hh(t.block.e)}</span><button type="button" class="rm" data-unblk="${t.id}" aria-label="시간표에서 빼기">×</button></span><span class="grip" data-grip="${t.id}"></span></div>`});
   if(ds===todayS){const n=new Date();const m=n.getHours()*60+n.getMinutes();if(m>TT_START&&m<TT_END)s+=`<div class="now" style="top:${(m-TT_START)*PPM}px"></div>`}
   return s+"</div>";
 }
+/* ===== 행사 시간: e.times=[{date,start:"HH:MM",end:"HH:MM",note}] — 그날 업무일지 시간표에 보여 줌.
+   시간을 안 넣었어도 하루 행사의 공개 '시간'(예: 2~3교시, 13:00~14:30)을 읽을 수 있으면 그걸로 보여 줌 */
+const fmHM=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+function parseTimeText(t){t=String(t||"");const out=[];let m;const H=h=>{h=+h;return h<7?h+12:h};
+  const re1=/(\d{1,2})\s*[:시]\s*(\d{2})?\s*분?\s*[~\-–]\s*(\d{1,2})\s*[:시]\s*(\d{2})?/g;while((m=re1.exec(t))){out.push({s:H(m[1])*60+(+m[2]||0),e:H(m[3])*60+(+m[4]||0)})}
+  if(!out.length){const re2=/(\d)\s*(?:교시)?\s*[~\-–]\s*(\d)\s*교시/g;const used=[];while((m=re2.exec(t))){const a=perOf(m[1]+"교시"),b=perOf(m[2]+"교시");if(a&&b){out.push({s:toMin(a.start),e:toMin(b.end)});used.push(m[1],m[2])}}
+    const re3=/(\d)\s*교시/g;while((m=re3.exec(t))){if(used.includes(m[1]))continue;const a=perOf(m[1]+"교시");if(a)out.push({s:toMin(a.start),e:toMin(a.end)})}
+    if(/점심/.test(t)){const a=core.settings.periods.find(p=>/점심/.test(p.name));if(a)out.push({s:toMin(a.start),e:toMin(a.end)})}}
+  return out.filter(x=>x.e>x.s)}
+function evSlots(e){const[s,en]=evRange(e);let T=(e.times||[]).filter(t=>t&&t.start&&t.end).map(t=>({d:e.type==="day"||!t.date?s:t.date,s:toMin(t.start),e:toMin(t.end),note:t.note||"",auto:false}));
+  if(!T.length&&e.pubTime&&s===en)T=parseTimeText(e.pubTime).map(x=>({d:s,s:x.s,e:x.e,note:"",auto:true}));
+  return T.filter(t=>t.d>=s&&t.d<=en&&t.e>t.s)}
+function evSlotsOn(ds){const out=[];core.events.forEach(e=>{const[s,en]=evRange(e);if(ds<s||ds>en)return;evSlots(e).forEach((x,i)=>{if(x.d===ds)out.push({ev:e,i,...x})})});return out.sort((a,b)=>a.s-b.s)}
+function evTimesHTML(e){const T=e.times||[];const[s,en]=evRange(e);const sug=!T.length&&e.pubTime?parseTimeText(e.pubTime):[];
+  const opts=sel=>{let o="";for(let m=TT_START;m<=TT_END;m+=10)o+=`<option value="${m}" ${m===sel?"selected":""}>${hh(m)}${m<12*60?" (오전)":""}</option>`;return o};
+  return `<div class="memobox" style="gap:6px"><div class="small muted">⏰ 시간 <span class="faint">· 넣으면 그날 업무일지 시간표에 보여요. 회차가 여러 번이면 줄을 더해요.</span></div>
+   ${T.map((t,i)=>`<div class="etrow">${e.type!=="day"?`<input type="date" data-etd="${i}" value="${t.date||s}" min="${s}" max="${en}" style="max-width:150px">`:""}
+     <select data-ets="${i}" aria-label="시작">${opts(toMin(t.start||"09:00"))}</select><span class="faint">~</span><select data-ete="${i}" aria-label="끝">${opts(toMin(t.end||"09:40"))}</select>
+     <select data-etp="${i}" aria-label="교시로 맞추기" style="max-width:100px"><option value="">교시로</option>${classPeriods().map(p=>`<option>${esc(p.name)}</option>`).join("")}</select>
+     <input data-etn="${i}" value="${esc(t.note||"")}" placeholder="대상·메모 (예: 3·4학년)" style="flex:1;min-width:120px"><button type="button" class="linkbtn" data-etx="${i}">빼기</button></div>`).join("")}
+   <div class="row"><button type="button" class="btn ghost sm" data-etadd>+ 시간 넣기</button>${sug.length?`<button type="button" class="btn line sm" data-etpub>공개 시간 '${esc(e.pubTime)}'에서 가져오기</button><span class="small faint">지금도 시간표에는 이 시간으로 보여요</span>`:""}</div></div>`}
 /* ===== 할 일 마감일: t.due — 시작한 날부터 마감일까지 완료 전이면 계속 보여 줌 ===== */
 function dueTasks(){const out=[];Object.values(journals).forEach(j=>Object.entries((j&&j.days)||{}).forEach(([ds,d])=>((d&&d.tasks)||[]).forEach(t=>{if(t.due&&!t.status)out.push({ds,t})})));return out.sort((a,b)=>a.t.due<b.t.due?-1:a.t.due>b.t.due?1:a.ds<b.ds?-1:1)}
 function dueChip(t,ds){if(!t.due)return"";const n=Math.round((P(t.due)-TODAY)/864e5);const hot=!t.status&&n>=0&&n<=2,late=!t.status&&n<0;
@@ -1422,6 +1449,7 @@ function openEvent(ev){
     :`<div class="fgrid"><label class="f">월<select id="e-mon">${months.map(d=>`<option value="${ym(d)}" ${ym(d)===mk?"selected":""}>${d.getFullYear()}년 ${d.getMonth()+1}월</option>`).join("")}</select></label>
       <label class="f">주차<select id="e-wk"><option value="">직접</option>${wks.map(w=>`<option value="${w.mon}" ${w.mon===e.start&&w.fri===e.end?"selected":""}>${w.n}주차 (${md(w.mon)}~${md(w.fri)})</option>`).join("")}</select></label>
       <label class="f">시작<input type="date" id="e-s" value="${e.start}"></label><label class="f">끝<input type="date" id="e-e" value="${e.end}"></label></div>`}
+   ${evTimesHTML(e)}
    ${e.lastYearNote?`<div class="lastyear"><b>작년 개선할 점</b><span>${esc(e.lastYearNote)}</span></div>`:""}
    <label class="f">행사 내용<textarea id="e-content">${esc(e.content)}</textarea></label>
    <div class="fgrid"><label class="f">예산(원)<input type="number" id="e-budget" value="${esc(e.budget)}" inputmode="numeric"></label><label class="f">상품<input id="e-prize" value="${esc(e.prize)}"></label>
@@ -1448,6 +1476,13 @@ function openEvent(ev){
   const m=modal(isNew?"행사 추가":"행사 수정",body(),`${isNew?"":`<button class="btn danger" data-del type="button">삭제</button><button class="btn ghost" data-gpush="${ev.id}" type="button">${ev.gcal?"구글에 보냄 ✓":"구글 캘린더에 넣기"}</button>`}<span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-ok type="button">저장</button>`);
   const redraw=()=>{keep();const sc=$(".mb",m).scrollTop;$(".mb",m).innerHTML=body();$(".mb",m).scrollTop=sc};
   bindPoster(m,e,redraw);
+  m.addEventListener("change",x=>{const t=x.target,dd=t.dataset;if(dd.ets==null&&dd.ete==null&&dd.etd==null&&dd.etn==null&&dd.etp==null)return;const T=e.times=e.times||[];
+    if(dd.ets!=null){const r=T[+dd.ets],v=+t.value;r.start=fmHM(v);if(toMin(r.end||"00:00")<=v){r.end=fmHM(Math.min(TT_END,v+40));redraw()}}
+    if(dd.ete!=null)T[+dd.ete].end=fmHM(+t.value);if(dd.etd!=null)T[+dd.etd].date=t.value;if(dd.etn!=null)T[+dd.etn].note=t.value;
+    if(dd.etp!=null&&t.value){const p=perOf(t.value);if(p){T[+dd.etp].start=p.start;T[+dd.etp].end=p.end;redraw()}}});
+  m.addEventListener("click",x=>{if(x.target.closest("[data-etadd]")){const T=e.times=e.times||[];const last=T[T.length-1];T.push({date:e.start,start:last?last.start:"09:00",end:last?last.end:"09:40",note:""});redraw();return}
+    const rx=x.target.closest("[data-etx]");if(rx){e.times.splice(+rx.dataset.etx,1);redraw();return}
+    if(x.target.closest("[data-etpub]")){e.times=parseTimeText(e.pubTime).map(z=>({date:e.start,start:fmHM(z.s),end:fmHM(z.e),note:""}));redraw()}});
   m.addEventListener("change",x=>{
     if(x.target.id==="e-pub"){keep();redraw();return}
     if(x.target.id==="e-mon"){keep();const[y,mo]=x.target.value.split("-").map(Number);const w=weeksOfMonth(y,mo)[0];e.start=w.mon;e.end=w.fri;redraw()}
@@ -3175,8 +3210,9 @@ function vMini(){
   const v=freshView();const now=new Date();const m=now.getHours()*60+now.getMinutes();
   const Ls=lessonsOn(todayS).map(x=>({s:toMin(x.start),e:toMin(x.end),t:`${x.pname} ${x.text}`,k:"수업"}));
   const Bs=bookingsOn(todayS).map(b=>{const p=perOf(b.period)||{start:"09:00",end:"09:40"};return{s:toMin(p.start),e:toMin(p.end),t:`${b.period} ${bookLabel(b)}`,k:"이용"}});
+  const Es=evSlotsOn(todayS).map(x=>({s:x.s,e:x.e,t:x.ev.name+(x.note?" "+x.note:""),k:"행사"}));
   const Xs=xcalOn(todayS).map(x=>({s:x.a==null?-1:x.a,e:x.a==null?1440:(x.b!=null?x.b:x.a+30),t:x.t,k:(xcSrc(x.src)||{}).name||"일정"}));
-  const all=[...Ls,...Bs,...Xs].sort((a,b)=>a.s-b.s);
+  const all=[...Ls,...Bs,...Es,...Xs].sort((a,b)=>a.s-b.s);
   const d=jday(todayS);const tasks=(d?d.tasks:[]).filter(t=>t.status!=="cancel"&&t.status!=="defer");
   const docs=DOCS().filter(docPending).sort((a,b)=>a.due<b.due?-1:1).slice(0,3);
   const dd=ddayInfo();
@@ -3202,6 +3238,7 @@ function ntMark(k){const o=ntFired();o.k.push(k);if(o.k.length>300)o.k=o.k.slice
 const NT={mem:new Set(),title:document.title};
 function ntToday(){const c=ntCfg(),out=[];
   if(c.lesson)lessonsOn(todayS).forEach(x=>out.push({k:"L|"+x.key,s:toMin(x.start),title:`${x.pname} 수업`,body:`${x.text} · ${hh(toMin(x.start))} 시작`}));
+  evSlotsOn(todayS).forEach(x=>out.push({k:"E|"+x.ev.id+"|"+x.s,s:x.s,title:x.ev.name,body:`${x.note?x.note+" · ":""}${hh(x.s)} 시작`}));
   if(c.lib)bookingsOn(todayS).forEach(b=>{const p=perOf(b.period);if(p)out.push({k:"B|"+b.id,s:toMin(p.start),title:`${b.period} 도서관 이용`,body:`${bookLabel(b)} · ${hh(toMin(p.start))}`})});
   if(c.task){const d=journals[todayS.slice(0,7)]&&jday(todayS);((d&&d.tasks)||[]).forEach(t=>{if(t.block&&!t.status&&!t.lkey)out.push({k:"T|"+t.id+"|"+t.block.s,s:t.block.s,title:"할 일",body:`${t.text} · ${hh(t.block.s)}`})})}
   return out}
@@ -3217,7 +3254,7 @@ function ntBrief(){
   dueTasks().filter(x=>x.t.due>=todayS&&x.t.due<=soon).forEach(x=>{const n=Math.round((P(x.t.due)-TODAY)/864e5);lines.push(`할 일 마감 ${n?"D-"+n:"오늘"}: ${x.t.text}`)});
   late.forEach(x=>lines.push(`⚠ 마감 지난 공문: ${x.title} (${md(x.due)})`));
   due.forEach(x=>{const n=Math.round((P(x.due)-TODAY)/864e5);lines.push(`공문 마감 ${n?"D-"+n:"오늘"}: ${x.title}`)});
-  evs.forEach(e=>lines.push(`${evRange(e)[0]>todayS?"내일":"오늘"} 행사: ${e.name}`));
+  evs.forEach(e=>{const tm=evSlots(e).filter(x=>x.d===todayS).map(x=>hh(x.s)).join(", ");lines.push(`${evRange(e)[0]>todayS?"내일":"오늘"} 행사: ${e.name}${tm?" ("+tm+")":""}`)});
   const xs=xcalOn(todayS);if(xs.length)lines.push(`다른 캘린더: ${xs.slice(0,4).map(x=>(x.a!=null?hh(x.a)+" ":"")+x.t).join(", ")}${xs.length>4?" …":""}`);
   if(!lines.length)return null;
   return{title:`오늘 챙길 것 (${TODAY.getMonth()+1}/${TODAY.getDate()} ${WD[TODAY.getDay()]})`,lines}}
@@ -3270,7 +3307,8 @@ async function buildICS(o){
     out.push("SUMMARY:"+icsEsc(sum));if(desc)out.push("DESCRIPTION:"+icsEsc(desc));
     if(alarm)out.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc(sum),"TRIGGER:"+alarm,"END:VALARM");out.push("END:VEVENT");n++};
   const{from,to}=o;const lead=o.lead?`-PT${o.lead}M`:null;const dayAl=o.lead?"-PT15H":null;
-  if(o.ev)core.events.forEach(e=>{const[s,en]=evRange(e);if(en<from||s>to)return;add("e-"+e.id,e.name,s,en,true,e.content,dayAl)});
+  if(o.ev)core.events.forEach(e=>{const[s,en]=evRange(e);if(en<from||s>to)return;const sl=evSlots(e).filter(x=>!x.auto);
+    if(sl.length)sl.forEach((x,i)=>add("e-"+e.id+"-"+i,e.name+(x.note?" ("+x.note+")":""),icsT(x.d,x.s),icsT(x.d,x.e),false,e.content,lead));else add("e-"+e.id,e.name,s,en,true,e.content,dayAl)});
   if(o.doc)DOCS().filter(docPending).forEach(x=>{if(x.due<from||x.due>to)return;add("d-"+x.id,"[마감] "+x.title,x.due,x.due,true,[x.from,x.memo].filter(Boolean).join("\n").slice(0,800),dayAl)});
   if(o.task){const months=new Set();for(let d=P(from);ymd(d)<=to;d=addD(d,28))months.add(ymd(d).slice(0,7));months.add(to.slice(0,7));for(const mk of months)await loadJournal(mk)}
   for(let d=P(from);ymd(d)<=to;d=addD(d,1)){const ds=ymd(d);
@@ -3572,7 +3610,7 @@ async function gFetch(src){const{from,to}=xcWin();const out=[];let tok="";
 async function gRefresh(ids,say){const srcs=XC().src.filter(s=>s.kind==="google"&&(!ids||ids.includes(s.id)));let ok=0;
   for(const s of srcs){try{const evs=await gFetch(s);const cut=xcPut(s,evs);ok++;say&&say(`${s.name}: 일정 ${s.n}개${cut?` (너무 많아 ${cut}개는 뺐어요)`:""}`)}catch(e){say&&say(`${s.name}: ${gErrMsg(e)}`);if(e&&/needs_reauth|server_not_connected|not_in_manifest|no_mcp|not_granted/.test(e.code||""))break}}
   if(ok){persist("core");render()}return ok}
-function gEvInput(ev){const[s,en]=evRange(ev);const inp={summary:ev.name,startTime:s+"T00:00:00",endTime:ymd(addD(P(en),1))+"T00:00:00",allDay:true,description:[ev.content,`(${core.settings.plannerName||"교무수첩"}에서 보냄)`].filter(Boolean).join("\n\n")};
+function gEvInput(ev){const[s,en]=evRange(ev);const sl=evSlots(ev);const one=sl.length===1&&s===en?sl[0]:null;const inp={summary:ev.name,startTime:one?`${one.d}T${fmHM(one.s)}:00`:s+"T00:00:00",endTime:one?`${one.d}T${fmHM(one.e)}:00`:ymd(addD(P(en),1))+"T00:00:00",allDay:!one,description:[ev.content,`(${core.settings.plannerName||"교무수첩"}에서 보냄)`].filter(Boolean).join("\n\n")};
   if(XC().pushCal)inp.calendarId=XC().pushCal;return inp}
 async function gPush(ev){const p=await gCall("create_event",gEvInput(ev));const id=p&&(p.id||(p.event&&p.event.id))||"";ev.gcal={id,cal:XC().pushCal||"primary",at:todayS,s:ev.start,e:ev.end||ev.start};persist("core");return ev.gcal}
 
@@ -3666,7 +3704,7 @@ const GPT_GUIDE=`너는 초등학교 사서교사가 쓰는 '함박꽃북토리 
  "tasks":{"YYYY-MM-DD":[{"id":"t…","text":"할 일","cat":"업무","due":"YYYY-MM-DD","time":"14:00","end":"15:00"}]},
  "info":{"docs":[{"id":"d…","title":"공문 제목","date":"받은 날 YYYY-MM-DD","from":"보낸 곳","no":"문서번호","cat":"분류","due":"YYYY-MM-DD","memo":"핵심만 요약"}],
          "entries":[{"id":"i…","group":"계정","label":"항목 이름","value":"내용","secret":false}]},
- "events":[{"id":"ev…","name":"행사 이름","type":"day","kind":"author","start":"YYYY-MM-DD","end":"YYYY-MM-DD","content":"메모","prepAdd":["준비 항목"]}],
+ "events":[{"id":"ev…","name":"행사 이름","type":"day","kind":"author","start":"YYYY-MM-DD","end":"YYYY-MM-DD","content":"메모","times":[{"date":"YYYY-MM-DD","start":"10:40","end":"12:10","note":"3·4학년"}],"prepAdd":["준비 항목"]}],
  "bookings":[{"id":"bk…","date":"YYYY-MM-DD","period":"3교시","cls":"5-1","subject":"국어","teacher":"선생님","topic":"주제","coop":false,"memo":""}],
  "calMemos":{"YYYY-MM-DD":[{"id":"m…","text":"메모"}]},
  "monthTodos":{"YYYY-MM":[{"id":"mt…","text":"할 일"}]}}
@@ -3677,6 +3715,7 @@ const GPT_GUIDE=`너는 초등학교 사서교사가 쓰는 '함박꽃북토리 
 - info.docs.cat: 자료 수집·폐기 / 예산 / 독서교육 / 행사·공모 / 연수 / 통계·조사 / 시설·안전 / 인사·복무 / 기타.
 - info.docs.memo: 원문을 통째로 붙이지 말고 대상, 기간, 방법, 제출처, 준비물, 링크, 연락처 같은 핵심만 줄바꿈(\\n)으로.
 - events.type: 하루면 "day", 며칠~한 주 기간이면 "week"(start~end). kind: author(작가와의 만남) / show(공연·초청) / make(체험·만들기) / camp(이벤트·캠페인) / out(바깥 행사 참여) / ""(기타). 기존 행사에 준비할 것을 더할 땐 prepAdd.
+- events.times: 행사 시간이 정해져 있으면(작가와의 만남, 낭독극, 공연, 체험 등) 꼭 넣어. 그날 업무일지 시간표에 들어가. 교시만 나와 있으면 [교무수첩 정보]의 교시 시간으로 바꿔(예: 3~4교시 → 10:40~12:10). 회차가 여러 번이면(3·4학년 3교시, 5·6학년 4교시) 줄을 나눠 넣고 note에 대상을 적어. 기존 행사의 시간을 넣을 땐 그 id로 times만 보내도 돼.
 - bookings.period: [교무수첩 정보]의 교시 이름 그대로 ("3교시"). cls는 "5-1" 모양. 협력수업이면 coop:true.
 - 같은 내용을 여러 곳에 겹쳐 넣지 마. (예: 행사로 넣었으면 같은 날 캘린더 메모는 빼)
 - 공문의 due와 할 일의 due는 같아도 돼. 공문은 보관용, 할 일은 내가 할 일이야.
@@ -3703,7 +3742,7 @@ function gptExtract(t){t=String(t||"").trim();if(!t)return{err:"붙여넣은 내
 function gptPreview(o){const out=[];const has=(arr,id)=>id&&(arr||[]).some(x=>x.id===id);const tag=f=>f?` <span class="chip" style="border:0">고침</span>`:"";
   Object.entries(o.tasks||{}).forEach(([ds,l])=>(l||[]).forEach(t=>out.push(`📝 <b>할 일</b> ${md(ds)}${t.time?" "+esc(t.time)+(t.end?"–"+esc(t.end):""):""}${t.due?` ~ <b>${md(t.due)}까지</b>`:""} · ${esc(t.text||"")}${t.cat?` <span class="faint">${esc(t.cat)}</span>`:""}`)));
   ((o.info||{}).docs||[]).forEach(x=>out.push(`📄 <b>공문</b> ${esc(x.title||"")}${x.due?` · 마감 ${md(x.due)}`:""}${x.from?` <span class="faint">${esc(x.from)}</span>`:""}${tag(has(DOCS(),x.id))}`));
-  (o.events||[]).forEach(e=>out.push(`🎉 <b>행사</b> ${esc(e.name||"(기존 행사)")}${e.start?` · ${md(e.start)}${e.end&&e.end!==e.start?"~"+md(e.end):""}`:""}${e.prepAdd?` · 준비 +${e.prepAdd.length}`:""}${tag(has(core.events,e.id))}`));
+  (o.events||[]).forEach(e=>out.push(`🎉 <b>행사</b> ${esc(e.name||"(기존 행사)")}${e.start?` · ${md(e.start)}${e.end&&e.end!==e.start?"~"+md(e.end):""}`:""}${(e.times||[]).length?" · ⏰ "+e.times.map(t=>esc((t.start||"")+"~"+(t.end||"")+(t.note?" "+t.note:""))).join(", "):""}${e.prepAdd?` · 준비 +${e.prepAdd.length}`:""}${tag(has(core.events,e.id))}`));
   (o.bookings||[]).forEach(b=>out.push(`📚 <b>도서관 이용</b> ${b.date?md(b.date):""} ${esc(b.period||"")} ${esc(b.cls||"")}${b.subject?" "+esc(b.subject):""}${b.coop?" (협력)":""}${tag(has(L().bookings,b.id))}`));
   Object.entries(o.calMemos||{}).forEach(([ds,l])=>(l||[]).forEach(m=>out.push(`🗓 <b>캘린더 메모</b> ${md(ds)} · ${esc(m.text||"")}`)));
   Object.entries(o.monthTodos||{}).forEach(([mk,l])=>(l||[]).forEach(m=>out.push(`📌 <b>${+mk.slice(5)}월 할 일</b> ${esc(m.text||"")}`)));
@@ -3730,6 +3769,7 @@ function openGptPaste(pre){
 /* 입력칸 밖에서 Ctrl+V로 추가 넣기 JSON을 붙여넣으면 바로 미리 보기 */
 document.addEventListener("click",async e=>{const c=e.target.closest("[data-cdone],[data-tdue]");if(!c)return;e.stopPropagation();const[ds,id]=(c.dataset.cdone||c.dataset.tdue).split("|");await loadJournal(ds.slice(0,7));
   if(c.dataset.tdue){openTimeSet(ds,id,"due");return}const t=findTask(ds,id);if(!t)return;t.status="done";persist("j-"+ds.slice(0,7));render();toast("완료로 표시했어요")},true);
+document.addEventListener("click",e=>{const b=e.target.closest("[data-evblk]");if(!b)return;const ev=core.events.find(x=>x.id===b.dataset.evblk);if(ev)openEvent(ev)});
 document.addEventListener("click",e=>{const r=e.target.closest("[data-hevopen]");if(!r||e.target.closest("button,a,input,[data-pick]"))return;const ev=core.events.find(x=>x.id===r.dataset.hevopen);if(ev)openEvent(ev)});
 document.addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const r=e.target.closest&&e.target.closest("[data-hevopen]");if(!r||e.target!==r)return;e.preventDefault();const ev=core.events.find(x=>x.id===r.dataset.hevopen);if(ev)openEvent(ev)});
 document.addEventListener("paste",e=>{const t=e.target;if(t&&t.closest&&t.closest("input,textarea,select,[contenteditable]"))return;if($("#modalRoot").innerHTML)return;
