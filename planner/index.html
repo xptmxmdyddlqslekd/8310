@@ -148,7 +148,10 @@ button.chip{cursor:pointer}
 .task{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid var(--line);min-height:40px}
 .task[draggable="true"]{cursor:grab}
 .cat{border:0;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;flex:none;min-width:42px}
-.task .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.task .t{flex:1;min-width:0;word-break:keep-all;overflow-wrap:anywhere;line-height:1.45}
+.task .t .duec{display:flex;width:fit-content;margin:3px 0 1px}
+.task [data-statwrap]{position:relative;flex:none;width:26px;height:26px}
+.task .statmenu{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:5;background:var(--paper);padding:4px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.18);border:1px solid var(--line)}
 .task.s-done .t{text-decoration:line-through;color:var(--fg3)}
 .task.s-cancel .t{text-decoration:line-through;color:var(--fg3);opacity:.6}
 .task.s-defer .t{color:var(--fg3)}
@@ -172,6 +175,10 @@ button.chip{cursor:pointer}
 .tt .hr span{position:absolute;left:6px;top:-1px;transform:translateY(-50%);background:var(--paper);padding:0 3px}
 .tt .half{position:absolute;left:38px;right:0;border-top:1px dashed var(--line)}
 .tt .bg{position:absolute;left:38px;right:6px;border-radius:6px;background:repeating-linear-gradient(135deg,var(--sunk) 0 6px,transparent 6px 12px);border:1px dashed var(--line2);font-size:11px;color:var(--fg3);padding:2px 6px;overflow:hidden;pointer-events:none}
+.tt .bg{display:grid;grid-template-columns:3.3em 7.2em 3.2em minmax(0,1fr);column-gap:4px;align-content:start;white-space:nowrap}
+.tt .bg>span{overflow:hidden;text-overflow:ellipsis}
+.tt .bg .pt{opacity:.75}
+@media (max-width:640px){.tt .bg{grid-template-columns:3.1em 6.8em 3em minmax(0,1fr)}}
 .tt .blk{position:absolute;left:44px;right:8px;border-radius:8px;padding:3px 8px;font-size:12px;overflow:hidden;cursor:grab;border:1px solid transparent;display:flex;justify-content:space-between;gap:4px}
 .tt .blk .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
 .tt .blk .tm{font-size:10px;opacity:.75;white-space:nowrap}
@@ -1080,8 +1087,11 @@ function timetable(ds,tasks){
   const lz=lessonsOn(ds),bz=bookingsOn(ds);
   core.settings.periods.filter(p=>/교시/.test(p.name)).forEach(p=>{const a=Math.max(toMin(p.start),TT_START),b=Math.min(toMin(p.end),TT_END);if(b<=a)return;
     const my=lz.find(x=>x.pname===p.name),bk=bz.filter(x=>x.period===p.name);
-    const lab=[my?`<b style="color:var(--lesson)">${my.moved?"↪ ":""}${esc(my.text)}${my.moved?` <span style="font-weight:400">(${md(my.from)} ${esc(my.fromP)}에서 옮김)</span>`:""}</b>`:"",...bk.map(x=>`<b style="color:var(--warn)">도서관 ${esc(bookLabel(x))}</b>`)].filter(Boolean).join(" · ");
-    s+=`<div class="bg" style="top:${(a-TT_START)*PPM}px;height:${(b-a)*PPM}px;${lab?"":"opacity:.5"};${my?"background:color-mix(in srgb,var(--lesson-soft) 70%,transparent)":bk.length?"background:color-mix(in srgb,var(--warn-soft) 80%,transparent)":""}">${esc(p.name)} <span class="num" style="opacity:.75">${hh(toMin(p.start))}–${hh(toMin(p.end))}</span>${lab?" "+lab:""}</div>`});
+    const myL=my?`<b style="color:var(--lesson)">${my.moved?"↪ ":""}${esc(my.text)}${my.moved?` <span style="font-weight:400">(${md(my.from)} ${esc(my.fromP)}에서 옮김)</span>`:""}</b>`:"";
+    const bkL=bk.length?`<b style="color:var(--warn)">${bk.map(x=>esc(bookLabel(x))).join(" · ")}</b>`:"";
+    const place=my?`<b style="color:var(--lesson)">수업</b>`:bk.length?`<b style="color:var(--warn)">도서관</b>`:"";
+    const what=my?myL+(bkL?` <span class="faint">·</span> <b style="color:var(--warn)">도서관</b> ${bkL}`:""):bkL;
+    s+=`<div class="bg" style="top:${(a-TT_START)*PPM}px;height:${(b-a)*PPM}px;${my||bk.length?"":"opacity:.5"};${my?"background:color-mix(in srgb,var(--lesson-soft) 70%,transparent)":bk.length?"background:color-mix(in srgb,var(--warn-soft) 80%,transparent)":""}"><span class="pn">${esc(p.name)}</span><span class="pt num">${hh(toMin(p.start))}–${hh(toMin(p.end))}</span><span class="pl">${place}</span><span class="pc">${what}</span></div>`});
   const bl=tasks.filter(t=>t.block).sort((x,y)=>x.block.s-y.block.s);const lane={},ends=[];let grp=[],grpEnd=-1;const flush=()=>{const n=Math.max(...grp.map(t=>lane[t.id]))+1;grp.forEach(t=>t._n=n);grp=[]};
   bl.forEach(t=>{if(t.block.s>=grpEnd&&grp.length){flush();ends.length=0}let L=ends.findIndex(e=>e<=t.block.s);if(L<0)L=ends.length;ends[L]=t.block.e;lane[t.id]=L;grp.push(t);grpEnd=Math.max(grpEnd,t.block.e)});if(grp.length)flush();
   bl.forEach(t=>{const c=t.cat?catColor(t.cat):"#c3bcc0";const n=t._n||1,L=lane[t.id]||0;delete t._n;
