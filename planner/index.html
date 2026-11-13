@@ -153,6 +153,11 @@ button.chip{cursor:pointer}
 .task.s-cancel .t{text-decoration:line-through;color:var(--fg3);opacity:.6}
 .task.s-defer .t{color:var(--fg3)}
 .task .when{font-size:11px;color:var(--fg3)}
+.duec{display:inline-flex;align-items:center;gap:3px;margin-left:6px;border:1px solid var(--line);background:transparent;border-radius:999px;padding:0 8px;font-size:11px;color:var(--fg2);cursor:pointer;vertical-align:1px;white-space:nowrap}
+.duec.hot{background:var(--accent-soft);color:var(--accent-deep);border-color:transparent;font-weight:700}
+.duec.late{color:var(--danger);border-color:var(--danger)}
+.carry{border:1px dashed var(--line);border-radius:12px;padding:6px 10px 2px;margin-bottom:10px;background:var(--sunk)}
+.carry .task:last-child{border-bottom:0}
 .stat{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line2);background:var(--paper);flex:none;font-size:13px;line-height:1;display:grid;place-items:center}
 .stat.done{border-color:var(--leaf);color:var(--leaf)}
 .stat.defer{border-color:var(--accent);color:var(--accent)}
@@ -1040,7 +1045,7 @@ function journalCard(ds,opts={}){
     ${vac?`<div class="small faint" style="margin-top:4px">${offName(ds)?offName(ds)+" · ":""}${isVac(ds)?(isVacWork(ds)&&!offName(ds)?"방학 중 출근일":"방학 기간"):"쉬는 날"}이에요</div>`:""}
     <div class="jgrid">
       <div style="min-width:0">
-        <div class="cap">할 일</div>
+        ${carryHTML(ds)}<div class="cap">할 일</div>
         <div class="tlist">${tasks.length?tasks.map(t=>taskRow(t,ds)).join(""):`<div class="empty">오늘 할 일을 적어 보세요. ⏱ 시간을 누르거나 시간표로 끌어다 놓으면 시간 칸이 생겨요.</div>`}</div>
         <form class="tadd" data-add="${ds}">
           <select aria-label="분류" id="cat-${ds}"><option value="">분류</option>${cats.map(c=>`<option>${esc(c.name)}</option>`).join("")}</select>
@@ -1062,10 +1067,10 @@ function taskTime(t){if(t.block)return `${hh(t.block.s)}–${hh(t.block.e)}`;if(
 function taskRow(t,ds){
   const sym={done:"✓",defer:"→",cancel:"✕"}[t.status]||"";
   const tt=taskTime(t);
-  const tm=t.status?(tt?`<span class="when num">${tt}</span>`:""):`<button type="button" class="when num ${tt?"set":""}" data-tset="${t.id}" aria-label="시간 정하기">${tt||"⏱ 시간"}</button>`;
+  const tm=t.status?(tt?`<span class="when num">${tt}</span>`:""):`<button type="button" class="when num ${tt?"set":""}" data-tset="${t.id}" aria-label="시간·마감 정하기">${tt||(t.due?"⏱":"⏱ 시간·마감")}</button>`;
   return `<div class="task s-${t.status||"none"}" draggable="${t.status?"false":"true"}" data-tid="${t.id}">
     <button type="button" class="cat" data-catcycle="${t.id}" style="${t.cat?catStyle(t.cat):"background:var(--sunk);color:var(--fg3)"}">${esc(t.cat||"분류")}</button>
-    <span class="t">${esc(t.text)}${movedNote(t,ds)}</span>${tm}
+    <span class="t">${esc(t.text)}${movedNote(t,ds)}${dueChip(t,ds)}</span>${tm}
     <span data-statwrap="${t.id}"><button type="button" class="stat ${t.status}" data-stat="${t.id}" aria-label="상태 고르기">${sym}</button></span>
   </div>`;
 }
@@ -1085,15 +1090,33 @@ function timetable(ds,tasks){
   if(ds===todayS){const n=new Date();const m=n.getHours()*60+n.getMinutes();if(m>TT_START&&m<TT_END)s+=`<div class="now" style="top:${(m-TT_START)*PPM}px"></div>`}
   return s+"</div>";
 }
-function openTimeSet(ds,id){
-  const t=findTask(ds,id);const b=t.block||{s:9*60,e:9*60+40};
+/* ===== 할 일 마감일: t.due — 시작한 날부터 마감일까지 완료 전이면 계속 보여 줌 ===== */
+function dueTasks(){const out=[];Object.values(journals).forEach(j=>Object.entries((j&&j.days)||{}).forEach(([ds,d])=>((d&&d.tasks)||[]).forEach(t=>{if(t.due&&!t.status)out.push({ds,t})})));return out.sort((a,b)=>a.t.due<b.t.due?-1:a.t.due>b.t.due?1:a.ds<b.ds?-1:1)}
+function dueChip(t,ds){if(!t.due)return"";const n=Math.round((P(t.due)-TODAY)/864e5);const hot=!t.status&&n>=0&&n<=2,late=!t.status&&n<0;
+  const lbl=`${md(t.due)}까지${t.status?"":" · "+(n===0?"오늘 마감":n>0?"D-"+n:Math.abs(n)+"일 지남")}`;
+  return ` <button type="button" class="duec ${hot?"hot":""} ${late?"late":""}" data-tdue="${ds}|${t.id}" title="마감일 바꾸기">⏳ ${lbl}</button>`}
+function carryList(ds){if(ds<todayS)return[];return dueTasks().filter(x=>x.ds<ds&&x.t.due>=ds)}
+function carryHTML(ds){const L0=carryList(ds);if(!L0.length)return"";
+  return `<div class="carry"><div class="cap" style="margin:0 0 2px">이어서 할 일 <span class="faint">· 마감 전까지 매일 보여요</span></div>${L0.map(x=>`<div class="task s-none" style="min-height:34px"><button type="button" class="cat" style="${x.t.cat?catStyle(x.t.cat):"background:var(--sunk);color:var(--fg3)"}" tabindex="-1">${esc(x.t.cat||"분류")}</button><span class="t">${esc(x.t.text)} <button type="button" class="linkbtn small faint" data-goday="${x.ds}" style="text-decoration:none">${md(x.ds)}부터</button>${dueChip(x.t,x.ds)}</span><button type="button" class="btn ghost sm" data-cdone="${x.ds}|${x.t.id}">완료</button></div>`).join("")}</div>`}
+function openTimeSet(ds,id,focus){
+  const t=findTask(ds,id);if(!t)return;const b=t.block||{s:9*60,e:9*60+40};const useT=focus==="due"?!!t.block:true;
   const opts=(sel,from,to)=>{let o="";for(let m=from;m<=to;m+=10)o+=`<option value="${m}" ${m===sel?"selected":""}>${hh(m)}${m<12*60?" (오전)":""}</option>`;return o};
-  const m=modal("시간 정하기",`<p class="small muted" style="margin:0">${esc(t.text)}</p><div class="fgrid" style="grid-template-columns:1fr 1fr"><label class="f">시작<select id="ts-s">${opts(b.s,TT_START,TT_END-10)}</select></label><label class="f">끝<select id="ts-e">${opts(b.e,TT_START+10,TT_END)}</select></label></div>
-   <div class="row">${[20,40,60,90].map(n=>`<button type="button" class="chip" data-len="${n}">${n}분</button>`).join("")}</div>`,
-   `${t.block?`<button class="btn danger" data-rm type="button">시간표에서 빼기</button>`:""}<span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-ok type="button">저장</button>`);
+  const fri=k=>{let d=addD(monday(P(ds)),4+7*k);return ymd(d)};
+  const m=modal("시간·마감 정하기",`<p class="small muted" style="margin:0">${esc(t.text)} <span class="faint">· ${md(ds)} 할 일</span></p>
+   <div class="sec-label" style="margin:6px 0 0">⏳ 마감일 <span class="faint">· 정하면 ${md(ds)}부터 마감일까지, 완료하기 전에는 매일 '이어서 할 일'로 보여요</span></div>
+   <div class="row" style="align-items:center"><input type="date" id="ts-due" value="${t.due||""}" min="${ds}" style="max-width:180px">${[["이번 주 금",fri(0)],["다음 주 금",fri(1)]].filter(x=>x[1]>=ds).map(x=>`<button type="button" class="chip" data-duepick="${x[1]}">${x[0]} ${md(x[1])}</button>`).join("")}<button type="button" class="linkbtn" data-duepick="">마감 없음</button></div>
+   <div class="sec-label" style="margin:10px 0 0">⏱ 시간</div>
+   <label class="chk"><input type="checkbox" id="ts-on" ${useT?"checked":""}><span class="t">이날 시간표에 넣기</span></label>
+   <div id="ts-box" style="${useT?"":"opacity:.45;pointer-events:none"}"><div class="fgrid" style="grid-template-columns:1fr 1fr"><label class="f">시작<select id="ts-s">${opts(b.s,TT_START,TT_END-10)}</select></label><label class="f">끝<select id="ts-e">${opts(b.e,TT_START+10,TT_END)}</select></label></div>
+   <div class="row">${[20,40,60,90].map(n=>`<button type="button" class="chip" data-len="${n}">${n}분</button>`).join("")}</div></div>`,
+   `<span class="sp"></span><button class="btn ghost" data-close type="button">닫기</button><button class="btn" data-ok type="button">저장</button>`);
+  m.addEventListener("change",e=>{if(e.target.id==="ts-on"){const bx=$("#ts-box",m);bx.style.opacity=e.target.checked?"":".45";bx.style.pointerEvents=e.target.checked?"":"none"}});
   m.addEventListener("click",e=>{const l=e.target.closest("[data-len]");if(l){const s=+$("#ts-s").value;$("#ts-e").value=Math.min(TT_END,s+ +l.dataset.len)}
-    if(e.target.closest("[data-rm]")){t.block=null;persist("j-"+ds.slice(0,7));closeModal();render()}
-    if(e.target.closest("[data-ok]")){const s=+$("#ts-s").value,en=+$("#ts-e").value;if(en<=s){toast("끝 시간이 시작보다 늦어야 해요");return}t.block={s,e:en};persist("j-"+ds.slice(0,7));closeModal();render()}});
+    const dp=e.target.closest("[data-duepick]");if(dp){$("#ts-due",m).value=dp.dataset.duepick;return}
+    if(e.target.closest("[data-ok]")){const dv=$("#ts-due",m).value;if(dv&&dv<ds){toast("마감일은 할 일 날짜보다 같거나 늦어야 해요");return}
+      if($("#ts-on",m).checked){const s=+$("#ts-s").value,en=+$("#ts-e").value;if(en<=s){toast("끝 시간이 시작보다 늦어야 해요");return}t.block={s,e:en}}else t.block=null;
+      if(dv&&dv!==ds)t.due=dv;else if(dv===ds)t.due=dv;else delete t.due;
+      persist("j-"+ds.slice(0,7));closeModal();render()}});
 }
 /* 수업이 빠진 날의 자동 할 일 정리: 아직 손대지 않은(상태 없는) 것만 지운다 */
 async function dropAutoLessons(ds,which){
@@ -1203,15 +1226,18 @@ function upcomingCard(pick){
 function dueBoard(todays,work){
   const since=ymd(addD(TODAY,-60));const over=[];const week=[];const fri=ymd(addD(monday(TODAY),4));
   Object.values(journals).forEach(j=>Object.entries(j.days||{}).forEach(([ds,d])=>{(d.tasks||[]).forEach(t=>{if(t.status)return;
+    if(t.due){if(t.due<todayS&&ds>=since)over.push({ds,t});return}
     if(ds<todayS&&ds>=since)over.push({ds,t});else if(ds>todayS&&ds<=fri)week.push({ds,t})})}));
+  const dl=dueTasks().filter(x=>x.t.due>=todayS);
   over.sort((a,b)=>a.ds<b.ds?-1:1);week.sort((a,b)=>a.ds<b.ds?-1:1);
   const plan=autoTargets().filter(a=>a.target>todayS&&a.target<=fri&&!(core.autoSent||{})[a.key]).map(a=>({ds:a.target,text:a.text}));
   const tdTodo=todays.filter(t=>t.status!=="done");
   const row=(x,btns)=>`<div class="chk" style="align-items:center"><button type="button" class="linkbtn num" data-goday="${x.ds}" style="flex:none;text-decoration:none;color:var(--fg2)">${md(x.ds)}</button><span class="t">${esc(x.t?x.t.text:x.text)}${x.t&&taskTime(x.t)?` <span class="small faint num">${taskTime(x.t)}</span>`:""}</span>${dchip(x.ds)}${btns||""}</div>`;
   const more=(arr,n)=>arr.length>n?`<span class="small faint">외 ${arr.length-n}개</span>`:"";
   return `<section class="panel"><div class="phead"><h2><span class="dot"></span>할 일 알림판</h2><button class="linkbtn" data-tab="journal" type="button">업무일지</button></div>
-   <div class="row" style="gap:6px;margin-bottom:6px">${[["밀린 일",over.length,over.length?"var(--danger)":""],["오늘",tdTodo.length,""],["이번 주",week.length+plan.length,""]].map(c=>`<span class="chip num" style="border:0;${c[2]?`color:${c[2]};font-weight:700`:""}">${c[0]} ${c[1]}</span>`).join("")}</div>
+   <div class="row" style="gap:6px;margin-bottom:6px">${[["밀린 일",over.length,over.length?"var(--danger)":""],["마감 앞둔 일",dl.length,""],["오늘",tdTodo.length,""],["이번 주",week.length+plan.length,""]].map(c=>`<span class="chip num" style="border:0;${c[2]?`color:${c[2]};font-weight:700`:""}">${c[0]} ${c[1]}</span>`).join("")}</div>
    ${over.length?`<div class="sec-label" style="color:var(--danger)">밀린 일 · 지난 날짜에 표시 안 한 할 일</div><div class="list">${over.slice(0,6).map(x=>row(x,`<button type="button" class="btn line sm" data-otoday="${x.ds}|${x.t.id}" title="오늘 할 일로 옮기기">오늘로</button><button type="button" class="btn ghost sm" data-odone="${x.ds}|${x.t.id}">완료</button>`)).join("")}${more(over,6)}</div>`:""}
+   ${dl.length?`<div class="sec-label">⏳ 마감 앞둔 일 · 완료 전까지 보여요</div><div class="list">${dl.slice(0,6).map(x=>`<div class="chk" style="align-items:center"><button type="button" class="linkbtn num" data-goday="${x.ds}" style="flex:none;text-decoration:none;color:var(--fg2)" title="시작한 날">${md(x.ds)}~</button><span class="t">${esc(x.t.text)}</span>${dueChip(x.t,x.ds)}<button type="button" class="btn ghost sm" data-odone="${x.ds}|${x.t.id}">완료</button></div>`).join("")}${more(dl,6)}</div>`:""}
    <div class="sec-label">오늘</div><div class="list">${todays.map(t=>`<label class="chk ${t.status==="done"?"done":""}"><input type="checkbox" data-htask="${t.id}" ${t.status==="done"?"checked":""}><span class="t">${esc(t.text)}${taskTime(t)?` <span class="small faint num">${taskTime(t)}</span>`:""}</span>${t.cat?`<span class="chip" style="${catStyle(t.cat)};border:0">${esc(t.cat)}</span>`:""}</label>`).join("")||`<div class="empty">${work?"아직 적은 할 일이 없어요.":"오늘은 쉬는 날이에요."}</div>`}</div>
    ${week.length||plan.length?`<div class="sec-label">이번 주 남은 날</div><div class="list">${[...week.map(x=>({ds:x.ds,h:row(x)})),...plan.map(x=>({ds:x.ds,h:row(x,`<span class="chip" style="border:0">행사 준비</span>`)}))].sort((p,q)=>p.ds<q.ds?-1:p.ds>q.ds?1:0).slice(0,8).map(x=>x.h).join("")}${more([...week,...plan],8)}</div>`:""}
   </section>`;
@@ -3174,6 +3200,7 @@ function ntBrief(){
   if(Ls.length)lines.push(`수업 ${Ls.length}개: ${Ls.map(x=>x.pname.replace("교시","")+"교시 "+x.text).join(", ")}`);
   if(Bs.length)lines.push(`도서관 이용 ${Bs.length}건: ${Bs.map(b=>b.period.replace("교시","")+"교시 "+(b.cls||"")).join(", ")}`);
   if(tk.length)lines.push(`할 일 ${tk.length}개${tk.length?": "+tk.slice(0,3).map(t=>t.text).join(", ")+(tk.length>3?" …":""):""}`);
+  dueTasks().filter(x=>x.t.due>=todayS&&x.t.due<=soon).forEach(x=>{const n=Math.round((P(x.t.due)-TODAY)/864e5);lines.push(`할 일 마감 ${n?"D-"+n:"오늘"}: ${x.t.text}`)});
   late.forEach(x=>lines.push(`⚠ 마감 지난 공문: ${x.title} (${md(x.due)})`));
   due.forEach(x=>{const n=Math.round((P(x.due)-TODAY)/864e5);lines.push(`공문 마감 ${n?"D-"+n:"오늘"}: ${x.title}`)});
   evs.forEach(e=>lines.push(`${evRange(e)[0]>todayS?"내일":"오늘"} 행사: ${e.name}`));
@@ -3608,7 +3635,11 @@ const GPT_GUIDE=`너는 초등학교 사서교사가 쓰는 '함박꽃북토리 
 - 시간은 24시간 "HH:MM". 교시만 있으면 [교무수첩 정보]의 교시 시간을 써.
 
 # 어디에 넣을지
-- tasks (업무일지 할 일): 내가 해야 하는 일. 마감이 있으면 마감일에 넣고 text 끝에 "(마감 11/26)"을 붙여. 준비가 필요하면 하루 이틀 전에 준비 할 일을 하나 더 넣어도 돼. 시간이 정해진 일은 time·end.
+- tasks (업무일지 할 일): 내가 해야 하는 일. 날짜 키는 '그 일을 시작할 날'이야.
+  - 기한이 있는 일(제출, 회신, 신청 등)은 시작할 날(따로 말이 없으면 오늘이나 접수 시작일)에 넣고 "due"에 마감일을 적어. 교무수첩이 마감일까지 매일 D-day와 함께 보여 줘.
+  - 같은 일을 마감일 날짜에 또 만들지 마. text에 "(마감 …)"도 붙이지 마.
+  - 그날 하는 일(회의 참석, 수업 등)은 due 없이 그 날짜에 넣어. 시간이 정해져 있으면 time·end.
+  - 단계가 나뉘면(작성 → 확인 받기 → 제출) 할 일 하나에 text로 순서를 적거나, 단계마다 할 일을 나누고 각각 due를 적어.
 - info.docs (공문·지침 보관함): 공문·지침·안내문을 받으면 항상 하나 만들어. 제출·회신 기한은 due.
 - events (도서관 행사): 작가와의 만남, 공연·초청, 체험·만들기, 이벤트·캠페인, 바깥 행사 참여 같은 도서관 행사.
 - bookings (도서관 이용 예약): 어떤 학급이 도서관을 쓰거나 협력수업을 하기로 한 것.
@@ -3618,7 +3649,7 @@ const GPT_GUIDE=`너는 초등학교 사서교사가 쓰는 '함박꽃북토리 
 
 # JSON 모양 (필요 없는 칸은 빼)
 {"app":"함박꽃북토리 교무수첩","kind":"add","title":"한 줄 설명",
- "tasks":{"YYYY-MM-DD":[{"id":"t…","text":"할 일","cat":"업무","time":"14:00","end":"15:00"}]},
+ "tasks":{"YYYY-MM-DD":[{"id":"t…","text":"할 일","cat":"업무","due":"YYYY-MM-DD","time":"14:00","end":"15:00"}]},
  "info":{"docs":[{"id":"d…","title":"공문 제목","date":"받은 날 YYYY-MM-DD","from":"보낸 곳","no":"문서번호","cat":"분류","due":"YYYY-MM-DD","memo":"핵심만 요약"}],
          "entries":[{"id":"i…","group":"계정","label":"항목 이름","value":"내용","secret":false}]},
  "events":[{"id":"ev…","name":"행사 이름","type":"day","kind":"author","start":"YYYY-MM-DD","end":"YYYY-MM-DD","content":"메모","prepAdd":["준비 항목"]}],
@@ -3634,6 +3665,7 @@ const GPT_GUIDE=`너는 초등학교 사서교사가 쓰는 '함박꽃북토리 
 - events.type: 하루면 "day", 며칠~한 주 기간이면 "week"(start~end). kind: author(작가와의 만남) / show(공연·초청) / make(체험·만들기) / camp(이벤트·캠페인) / out(바깥 행사 참여) / ""(기타). 기존 행사에 준비할 것을 더할 땐 prepAdd.
 - bookings.period: [교무수첩 정보]의 교시 이름 그대로 ("3교시"). cls는 "5-1" 모양. 협력수업이면 coop:true.
 - 같은 내용을 여러 곳에 겹쳐 넣지 마. (예: 행사로 넣었으면 같은 날 캘린더 메모는 빼)
+- 공문의 due와 할 일의 due는 같아도 돼. 공문은 보관용, 할 일은 내가 할 일이야.
 
 # 개인정보
 - 학생 이름, 학생 연락처 같은 개인정보는 JSON에 넣지 말고 요약에 "개인정보는 뺐어요"라고 알려.`;
@@ -3655,7 +3687,7 @@ function gptExtract(t){t=String(t||"").trim();if(!t)return{err:"붙여넣은 내
   if(!o||typeof o!=="object")return{err:"넣을 수 있는 모양이 아니에요"};if(o.core)return{err:"전체 백업 파일이에요. 설정 → 백업에서 불러와 주세요"};
   if(!o.kind&&["tasks","events","info","bookings","calMemos","monthTodos","promos","yearly"].some(k=>o[k]))o.kind="add";if(o.kind!=="add")return{err:"교무수첩 추가 넣기 모양이 아니에요"};return{o}}
 function gptPreview(o){const out=[];const has=(arr,id)=>id&&(arr||[]).some(x=>x.id===id);const tag=f=>f?` <span class="chip" style="border:0">고침</span>`:"";
-  Object.entries(o.tasks||{}).forEach(([ds,l])=>(l||[]).forEach(t=>out.push(`📝 <b>할 일</b> ${md(ds)}${t.time?" "+esc(t.time)+(t.end?"–"+esc(t.end):""):""} · ${esc(t.text||"")}${t.cat?` <span class="faint">${esc(t.cat)}</span>`:""}`)));
+  Object.entries(o.tasks||{}).forEach(([ds,l])=>(l||[]).forEach(t=>out.push(`📝 <b>할 일</b> ${md(ds)}${t.time?" "+esc(t.time)+(t.end?"–"+esc(t.end):""):""}${t.due?` ~ <b>${md(t.due)}까지</b>`:""} · ${esc(t.text||"")}${t.cat?` <span class="faint">${esc(t.cat)}</span>`:""}`)));
   ((o.info||{}).docs||[]).forEach(x=>out.push(`📄 <b>공문</b> ${esc(x.title||"")}${x.due?` · 마감 ${md(x.due)}`:""}${x.from?` <span class="faint">${esc(x.from)}</span>`:""}${tag(has(DOCS(),x.id))}`));
   (o.events||[]).forEach(e=>out.push(`🎉 <b>행사</b> ${esc(e.name||"(기존 행사)")}${e.start?` · ${md(e.start)}${e.end&&e.end!==e.start?"~"+md(e.end):""}`:""}${e.prepAdd?` · 준비 +${e.prepAdd.length}`:""}${tag(has(core.events,e.id))}`));
   (o.bookings||[]).forEach(b=>out.push(`📚 <b>도서관 이용</b> ${b.date?md(b.date):""} ${esc(b.period||"")} ${esc(b.cls||"")}${b.subject?" "+esc(b.subject):""}${b.coop?" (협력)":""}${tag(has(L().bookings,b.id))}`));
@@ -3682,6 +3714,8 @@ function openGptPaste(pre){
     if(e.target.closest("[data-gptctx]")){copyText(gptContext(),null);return}
     if(e.target.closest("[data-gptok]")&&o){const b=e.target.closest("[data-gptok]");b.disabled=true;closeModal();await mergeAdd(o)}})}
 /* 입력칸 밖에서 Ctrl+V로 추가 넣기 JSON을 붙여넣으면 바로 미리 보기 */
+document.addEventListener("click",async e=>{const c=e.target.closest("[data-cdone],[data-tdue]");if(!c)return;e.stopPropagation();const[ds,id]=(c.dataset.cdone||c.dataset.tdue).split("|");await loadJournal(ds.slice(0,7));
+  if(c.dataset.tdue){openTimeSet(ds,id,"due");return}const t=findTask(ds,id);if(!t)return;t.status="done";persist("j-"+ds.slice(0,7));render();toast("완료로 표시했어요")},true);
 document.addEventListener("paste",e=>{const t=e.target;if(t&&t.closest&&t.closest("input,textarea,select,[contenteditable]"))return;if($("#modalRoot").innerHTML)return;
   const tx=(e.clipboardData||window.clipboardData).getData("text");if(!tx||!/"kind"\s*:\s*"add"/.test(tx))return;e.preventDefault();openGptPaste(tx)});
 document.addEventListener("click",e=>{if(e.target.closest("#openGpt,[data-gptopen]")){closeModal();openGptPaste()}});
