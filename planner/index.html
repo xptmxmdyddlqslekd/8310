@@ -158,7 +158,17 @@ button.chip{cursor:pointer}
 .task .when{font-size:11px;color:var(--fg3)}
 .etrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .etrow select,.etrow input[type=date]{width:auto;flex:none;min-width:0}
-.tt .evblk{cursor:pointer;background:color-mix(in srgb,var(--accent) 22%,var(--paper));border-color:var(--accent);color:var(--fg)}
+.tt .bg.nopt{grid-template-columns:3.3em 3.2em minmax(0,1fr)}
+.tt .bg.nopt .pt{display:none}
+.evlist{display:flex;flex-direction:column;gap:4px;margin:0 0 6px}
+.evpill{display:flex;gap:8px;align-items:baseline;text-align:left;border:1px solid var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 14%,var(--paper));padding:5px 10px;font:inherit;font-size:12.5px;color:var(--fg);cursor:pointer;word-break:keep-all}
+.evpill.auto{border-style:dashed}
+.evpill .num{flex:none;font-size:11.5px;color:var(--fg2)}
+.evpill b{font-weight:600}
+.tt .evstrip{position:absolute;z-index:2;border-radius:8px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 24%,var(--paper));color:var(--fg);padding:4px 0;cursor:pointer;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;font:inherit}
+.tt .evstrip.auto{border-style:dashed}
+.tt .evstrip span{writing-mode:vertical-rl;font-size:11.5px;font-weight:600;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%}
+.tt .evstrip:hover{background:color-mix(in srgb,var(--accent) 38%,var(--paper))}
 .evopen{cursor:pointer;transition:background .15s}
 .evopen:hover{background:color-mix(in srgb,var(--accent-soft) 45%,var(--sunk))}
 .evopen:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1098,16 +1108,18 @@ function timetable(ds,tasks){
     const place=my?`<b style="color:var(--lesson)">수업</b>`:bk.length?`<b style="color:var(--warn)">도서관</b>`:"";
     const what=my?myL+(bkL?` <span class="faint">·</span> <b style="color:var(--warn)">도서관</b> ${bkL}`:""):bkL;
     s+=`<div class="bg" style="top:${(a-TT_START)*PPM}px;height:${(b-a)*PPM}px;${my||bk.length?"":"opacity:.5"};${my?"background:color-mix(in srgb,var(--lesson-soft) 70%,transparent)":bk.length?"background:color-mix(in srgb,var(--warn-soft) 80%,transparent)":""}"><span class="pn">${esc(p.name)}</span><span class="pt num">${hh(toMin(p.start))}–${hh(toMin(p.end))}</span><span class="pl">${place}</span><span class="pc">${what}</span></div>`});
-  const evb=evSlotsOn(ds).map(x=>({id:"ev_"+x.ev.id+"_"+x.i,block:{s:Math.max(x.s,TT_START),e:Math.min(x.e,TT_END)},_ev:x})).filter(x=>x.block.e>x.block.s);
-  const bl=[...tasks.filter(t=>t.block),...evb].sort((x,y)=>x.block.s-y.block.s);const lane={},ends=[];let grp=[],grpEnd=-1;const flush=()=>{const n=Math.max(...grp.map(t=>lane[t.id]))+1;grp.forEach(t=>t._n=n);grp=[]};
+  const evb=evSlotsOn(ds).map(x=>({s:Math.max(x.s,TT_START),e:Math.min(x.e,TT_END),x})).filter(x=>x.e>x.s);
+  const eEnds=[];evb.forEach(v=>{let L=eEnds.findIndex(e=>e<=v.s);if(L<0)L=eEnds.length;eEnds[L]=v.e;v.L=L});const nE=eEnds.length,EW=30,RW=nE?nE*EW:0;
+  evb.forEach(v=>{const x=v.x;s+=`<button type="button" class="evstrip ${x.auto?"auto":""}" data-evblk="${x.ev.id}" title="${esc(x.ev.name)}${x.note?" · "+esc(x.note):""} · ${hh(x.s)}–${hh(x.e)}${x.auto?" (공개 시간에서 읽음)":""} — 눌러서 열기" style="top:${(v.s-TT_START)*PPM}px;height:${Math.max(18,(v.e-v.s)*PPM)}px;right:${6+(nE-1-v.L)*EW}px;width:${EW-4}px"><span>${esc(x.ev.name)}${x.note?" · "+esc(x.note):""}</span></button>`});
+  if(RW)s=s.replace(/class="bg" style="/g,`class="bg nopt" style="right:${6+RW}px;`);
+  const bl=tasks.filter(t=>t.block).sort((x,y)=>x.block.s-y.block.s);const lane={},ends=[];let grp=[],grpEnd=-1;const flush=()=>{const n=Math.max(...grp.map(t=>lane[t.id]))+1;grp.forEach(t=>t._n=n);grp=[]};
   bl.forEach(t=>{if(t.block.s>=grpEnd&&grp.length){flush();ends.length=0}let L=ends.findIndex(e=>e<=t.block.s);if(L<0)L=ends.length;ends[L]=t.block.e;lane[t.id]=L;grp.push(t);grpEnd=Math.max(grpEnd,t.block.e)});if(grp.length)flush();
   bl.forEach(t=>{const c=t.cat?catColor(t.cat):"#c3bcc0";const n=t._n||1,L=lane[t.id]||0;delete t._n;
-    if(t._ev){const x=t._ev;s+=`<div class="blk evblk ${n>1?"narrow":""}" data-evblk="${x.ev.id}" title="${esc(x.ev.name)}${x.auto?" (공개 시간에서 읽음)":""} · 눌러서 열기" style="left:calc(44px + (100% - 52px) * ${L}/${n});right:auto;width:calc((100% - 52px) / ${n} - 2px);top:${(t.block.s-TT_START)*PPM}px;height:${Math.max(18,(t.block.e-t.block.s)*PPM)}px;${x.auto?"border-style:dashed":""}">
-      <span class="nm">🎉 ${esc(x.ev.name)}${x.note?` <span style="font-weight:400;opacity:.8">${esc(x.note)}</span>`:""}</span><span class="tm num">${hh(x.s)}–${hh(x.e)}</span></div>`;return}
-    s+=`<div class="blk ${n>1?"narrow":""}" data-blk="${t.id}" style="left:calc(44px + (100% - 52px) * ${L}/${n});right:auto;width:calc((100% - 52px) / ${n} - 2px);top:${(t.block.s-TT_START)*PPM}px;height:${Math.max(18,(t.block.e-t.block.s)*PPM)}px;background:color-mix(in srgb,${c} 30%,var(--paper));border-color:color-mix(in srgb,${c} 70%,var(--paper))">
+    s+=`<div class="blk ${n>1?"narrow":""}" data-blk="${t.id}" style="left:calc(44px + (100% - ${52+RW}px) * ${L}/${n});right:auto;width:calc((100% - ${52+RW}px) / ${n} - 2px);top:${(t.block.s-TT_START)*PPM}px;height:${Math.max(18,(t.block.e-t.block.s)*PPM)}px;background:color-mix(in srgb,${c} 30%,var(--paper));border-color:color-mix(in srgb,${c} 70%,var(--paper))">
       <span class="nm">${esc(t.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap"><span class="tm num">${hh(t.block.s)}–${hh(t.block.e)}</span><button type="button" class="rm" data-unblk="${t.id}" aria-label="시간표에서 빼기">×</button></span><span class="grip" data-grip="${t.id}"></span></div>`});
   if(ds===todayS){const n=new Date();const m=n.getHours()*60+n.getMinutes();if(m>TT_START&&m<TT_END)s+=`<div class="now" style="top:${(m-TT_START)*PPM}px"></div>`}
-  return s+"</div>";
+  const head=evb.length?`<div class="evlist">${evb.map(v=>`<button type="button" class="evpill ${v.x.auto?"auto":""}" data-evblk="${v.x.ev.id}"><span class="num">${hh(v.x.s)}–${hh(v.x.e)}</span><b>🎉 ${esc(v.x.ev.name)}</b>${v.x.note?`<span class="faint">${esc(v.x.note)}</span>`:""}</button>`).join("")}</div>`:"";
+  return head+s+"</div>";
 }
 /* ===== 행사 시간: e.times=[{date,start:"HH:MM",end:"HH:MM",note}] — 그날 업무일지 시간표에 보여 줌.
    시간을 안 넣었어도 하루 행사의 공개 '시간'(예: 2~3교시, 13:00~14:30)을 읽을 수 있으면 그걸로 보여 줌 */
